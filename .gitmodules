@@ -1,0 +1,4 @@
+
+[submodule "redes_reg_genes"]
+	path = redes_reg_genes
+	url = https://github.com/Wallace-F-Rosa/redes_reg_genes
