@@ -24,18 +24,18 @@ def generateCudaCode(weights_file_path):
 
     # estado é um vetor de inteiros
     # cada bit representa um vértice
-    stateSize = networkSize//64
+    stateSize = networkSize//64 + (networkSize%64 != 0)
     code_file.write('typedef ulonglong['+str(stateSize)+'] state;\n')
 
     # cuda kernel recebe os estados aleatórios inicialmente, simulando N estados até o número de simulações fornecido
     code_file.write('__global__ void network_simulation(state * randState, state * statef, unsigned long long SIMULATIONS) {\n')
     code_file.write('   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n')
     code_file.write('   state state0, state1;\n')
-    code_file.write('   if (tid < SIMULATIONS) {')
+    code_file.write('   if (tid < SIMULATIONS) {\n')
     
     # inicializando estados
     for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = randState['+str(i)+'];')
+        code_file.write('       state0['+str(i)+'] = randState['+str(i)+'];\n')
 
     # TODO : gerar equações da rede
     for i in range(networkSize) :
@@ -47,9 +47,9 @@ def generateCudaCode(weights_file_path):
 
     # salva o estado inicial do atrator na memória global da gpu
     for i in range(stateSize) :
-        code_file.write('   statef[tid][i] = state1[i];\n')
-    code_file.write('   }')
-    code_file.write('}')
+        code_file.write('       statef[tid]['+str(i)+'] = state1['+str(i)+'];\n')
+    code_file.write('   }\n')
+    code_file.write('}\n')
     code_file.close()
 
 if __name__ == '__main__' :
