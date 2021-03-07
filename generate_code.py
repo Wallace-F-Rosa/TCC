@@ -34,7 +34,7 @@ def generateCudaCode(weights_file_path):
     code_file.write('       if (a[i] != b[i])\n')
     code_file.write('           return false;\n')
     code_file.write('   }\n')
-    code_file.write('   return true\n')
+    code_file.write('   return true;\n')
     code_file.write('}\n')
 
     # cuda kernel recebe os estados aleatórios inicialmente, simulando N estados até o número de simulações fornecido
