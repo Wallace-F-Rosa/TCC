@@ -2,6 +2,8 @@ import os
 import sys
 
 def generateCudaCode(weights_file_path):
+    """ Gera código cuda para simulação da rede utilizando equações com peso """
+
     # lendo pesos das redes
     weightsFile = open(weights_file_path, 'r')
     fileContent = weightsFile.readlines()
@@ -29,7 +31,7 @@ def generateCudaCode(weights_file_path):
     code_file.write('typedef ulonglong['+str(stateSize)+'] state;\n')
 
     #função de comparação entre estados
-    code_file.write('bool equals(state a, state b) {\n')
+    code_file.write('__device__ bool equals(state a, state b) {\n')
     code_file.write('   for (int i = 0; i < '+str(stateSize)+'; i++) {\n')
     code_file.write('       if (a[i] != b[i])\n')
     code_file.write('           return false;\n')
@@ -54,6 +56,7 @@ def generateCudaCode(weights_file_path):
     # estadof[var//64] = 0
     # estadof[var//64] |= ( ( ( (estado0[i//64] >> var) % 2 )*peso + ( (estado0[i//64] >> var) % 2 )*peso  ...) >= lim) << var;
     # gerando equações do passo 1 (estado0 anda um passo)
+    # FIXME: kernel não roda quando temos muitas instruções de equação
     for i in range(networkSize) :
         eq = '          state1['+str(i//64)+'] |= ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
@@ -75,7 +78,6 @@ def generateCudaCode(weights_file_path):
         eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
         code_file.write(eq)
             
-    # TODO : comparação entre estados (talvez possa ser um macro)
     code_file.write('       } while(equals(state0, state1));\n')
 
     # salva o estado inicial do atrator na memória global da gpu
@@ -83,9 +85,28 @@ def generateCudaCode(weights_file_path):
         code_file.write('       statef[tid]['+str(i)+'] = state1['+str(i)+'];\n')
     code_file.write('   }\n')
     code_file.write('}\n')
+
+    code_file.write('\n')
+    code_file.write('void init_rand(state * randState, unsigned long long SIMULATIONS) {\n')
+    code_file.write('   srand(time(NULL))\n')
+    code_file.write('   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n')
+    for i in range(stateSize):
+        code.write('        randState[i]['+str(i)+'] = rand()%((unsigned long)(1<<31)-1);\n')
+    code_file.write('       \n')
+    code_file.write('   }\n')
+    code_file.write('   \n')
+    code_file.write('}\n')
+
+    # TODO: código main, alocar vetores e preencher estados iniciais com números randômicos
+    code_file.write('int main(int argc) {\n')
+    code_file.write('   \n')
+    code_file.write('}\n')
+
     code_file.close()
 
 if __name__ == '__main__' :
+    """ Função main recebe arquivo de rede como parâmetro e gera como saída
+    um arquivo tlf.cu para simulação da rede em CUDA"""
     # try :
     weights_file_path = sys.argv[1]
     print(weights_file_path)
