@@ -17,13 +17,13 @@ def generateCudaCode(weights_file_path):
     code_file = open('tlf.cu', 'w+')
     
     # headers do código
-    code_file.write('#include <iostream>\n')
-    code_file.write('#include <chrono>\n')
-    code_file.write('#include <ctime>\n')
-    code_file.write('#include <string>\n')
-    code_file.write('#include <limits>\n')
-    code_file.write('#include <stdio.h>\n')
-    code_file.write('#include <stdlib.h>\n')
+    code_file.write('#include <iostream>\n'+
+                    '#include <chrono>\n'+
+                    '#include <ctime>\n'+
+                    '#include <string>\n'+
+                    '#include <limits>\n'+
+                    '#include <stdio.h>\n'+
+                    '#include <stdlib.h>\n')
 
     # estado é um vetor de inteiros
     # cada bit representa um vértice
@@ -31,24 +31,24 @@ def generateCudaCode(weights_file_path):
     code_file.write('typedef ulonglong['+str(stateSize)+'] state;\n')
 
     #função de comparação entre estados
-    code_file.write('__device__ bool equals(state a, state b) {\n')
-    code_file.write('   for (int i = 0; i < '+str(stateSize)+'; i++) {\n')
-    code_file.write('       if (a[i] != b[i])\n')
-    code_file.write('           return false;\n')
-    code_file.write('   }\n')
-    code_file.write('   return true;\n')
-    code_file.write('}\n')
+    code_file.write('__device__ bool equals(state a, state b) {\n'+
+                    '   for (int i = 0; i < '+str(stateSize)+'; i++) {\n'+
+                    '       if (a[i] != b[i])\n'+
+                    '           return false;\n'+
+                    '   }\n'+
+                    '   return true;\n'+
+                    '}\n')
 
     # cuda kernel recebe os estados aleatórios inicialmente, simulando N estados até o número de simulações fornecido
-    code_file.write('__global__ void network_simulation(state * randState, state * statef, unsigned long long SIMULATIONS) {\n')
-    code_file.write('   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n')
-    code_file.write('   state state0, state1;\n')
-    code_file.write('   if (tid < SIMULATIONS) {\n')
+    code_file.write('__global__ void network_simulation(state * randState, state * statef, unsigned long long SIMULATIONS) {\n'+
+                    '   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n'+
+                    '   state state0, state1;\n'+
+                    '   if (tid < SIMULATIONS) {\n')
     
     # inicializando estados
     for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = randState['+str(i)+'];\n')
-        code_file.write('       state1['+str(i)+'] = 0;\n')
+        code_file.write('       state0['+str(i)+'] = randState['+str(i)+'];\n'+
+                        '       state1['+str(i)+'] = 0;\n')
 
     code_file.write('       do {\n')
 
@@ -83,10 +83,17 @@ def generateCudaCode(weights_file_path):
     # salva o estado inicial do atrator na memória global da gpu
     for i in range(stateSize) :
         code_file.write('       statef[tid]['+str(i)+'] = state1['+str(i)+'];\n')
-    code_file.write('   }\n')
-    code_file.write('}\n')
+    code_file.write('   }\n'+
+                    '}\n')
 
     code_file.write('\n')
+
+    # TODO: função que imprime atratores encontrados num arquivo
+    code_file.write('void output_atractors(state * statef, unsigned long long SIMULATIONS) {\n'+
+                    ''+
+                    '}')
+
+    # inicializa estados inicias aleatoriamente
     code_file.write('void init_rand(state * randState, unsigned long long SIMULATIONS) {\n')
     code_file.write('   srand(time(NULL))\n')
     code_file.write('   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n')
@@ -98,9 +105,27 @@ def generateCudaCode(weights_file_path):
     code_file.write('}\n')
 
     # TODO: código main, alocar vetores e preencher estados iniciais com números randômicos
-    code_file.write('int main(int argc) {\n')
-    code_file.write('   \n')
-    code_file.write('}\n')
+    code_file.write('int main(int argc, char **argv) {\n'+
+                    '   unsigned long long SIMULATIONS = 0;\n'+    
+                    '   string argv2 = argv[0];\n'+
+                    '   for(int i = 0; i < argv2.size() ; i++)\n'+
+                    "       MAX_ESTADO += ((unsigned long int)(argv2[i] - '0'))*pow(10,argv2.size()-i-1);\n"+
+                    '   state * randState_h, * randState_d, * statef_h, * statef_d;\n'+
+                    '   randState_h = new state[SIMULATIONS];\n'+
+                    '   statef_h = new state[SIMULATIONS];\n'+
+                    '   cudaMalloc((state **)&randState_d,sizeof(state)*SIMULATIONS);\n'+
+                    '   cudaMalloc((state **)&statef_d,sizeof(state)*SIMULATIONS);\n'+
+                    '   initrand(randState_h,SIMULATIONS);\n'+
+                    '   cudaMemcpy(randState_d, randState_h, sizeof(state)*SIMULATIONS, cudaMemcpyHostToDevice);\n'+
+                    '   int threads = 1024;\n'+
+                    '   dim3 block(threads);\n'+
+                    '   dim3 grid((MAX_ESTADO + block.x -1)/block.x);\n'+
+                    '   network_simulation<<<grid,block>>>(state * randState, state * statef, unsigned long long SIMULATIONS);\n'+
+                    '   cudaDeviceSynchronize();\n'+
+                    '   cudaMemcpy(randState_h, randState_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
+                    '   output_atractors(statef_h, SIMULATIONS);\n'
+                    '   return 0;'+
+                    '}\n')
 
     code_file.close()
 
