@@ -111,7 +111,7 @@ def generateCudaCode(weights_file_path):
     # TODO: código main, alocar vetores e preencher estados iniciais com números randômicos
     code_file.write('int main(int argc, char **argv) {\n'+
                     '   unsigned long long SIMULATIONS = 0;\n'+    
-                    '   string argv2 = argv[0];\n'+
+                    '   std::string argv2 = argv[0];\n'+
                     '   for(int i = 0; i < argv2.size() ; i++)\n'+
                     "       SIMULATIONS += ((unsigned long int)(argv2[i] - '0'))*pow(10,argv2.size()-i-1);\n"+
                     '   state * randState_h, * randState_d, * statef_h, * statef_d;\n'+
@@ -119,7 +119,7 @@ def generateCudaCode(weights_file_path):
                     '   statef_h = new state[SIMULATIONS];\n'+
                     '   cudaMalloc((state **)&randState_d,sizeof(state)*SIMULATIONS);\n'+
                     '   cudaMalloc((state **)&statef_d,sizeof(state)*SIMULATIONS);\n'+
-                    '   initrand(randState_h,SIMULATIONS);\n'+
+                    '   init_rand(randState_h,SIMULATIONS);\n'+
                     '   cudaMemcpy(randState_d, randState_h, sizeof(state)*SIMULATIONS, cudaMemcpyHostToDevice);\n'+
                     '   int threads = 1024;\n'+
                     '   dim3 block(threads);\n'+
@@ -127,7 +127,7 @@ def generateCudaCode(weights_file_path):
                     '   network_simulation<<<grid,block>>>(randState_d, statef_d, SIMULATIONS);\n'+
                     '   cudaDeviceSynchronize();\n'+
                     '   cudaMemcpy(randState_h, randState_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
-                    '   output_atractors(stataf_h, SIMULATIONS);\n'
+                    '   output_atractors(statef_h, SIMULATIONS);\n'
                     '   return 0;'+
                     '}\n')
 
