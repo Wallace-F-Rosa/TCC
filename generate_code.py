@@ -99,7 +99,7 @@ def generateCudaCode(weights_file_path):
 
     # inicializa estados inicias aleatoriamente
     code_file.write('void init_rand(state * randState, unsigned long long SIMULATIONS) {\n')
-    code_file.write('   srand(time(NULL))\n')
+    code_file.write('   srand(time(NULL));\n')
     code_file.write('   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n')
     for i in range(stateSize):
         code_file.write('        randState[i]['+str(i)+'] = rand()%((unsigned long)(1<<31)-1);\n')
@@ -113,7 +113,7 @@ def generateCudaCode(weights_file_path):
                     '   unsigned long long SIMULATIONS = 0;\n'+    
                     '   string argv2 = argv[0];\n'+
                     '   for(int i = 0; i < argv2.size() ; i++)\n'+
-                    "       MAX_ESTADO += ((unsigned long int)(argv2[i] - '0'))*pow(10,argv2.size()-i-1);\n"+
+                    "       SIMULATIONS += ((unsigned long int)(argv2[i] - '0'))*pow(10,argv2.size()-i-1);\n"+
                     '   state * randState_h, * randState_d, * statef_h, * statef_d;\n'+
                     '   randState_h = new state[SIMULATIONS];\n'+
                     '   statef_h = new state[SIMULATIONS];\n'+
@@ -123,7 +123,7 @@ def generateCudaCode(weights_file_path):
                     '   cudaMemcpy(randState_d, randState_h, sizeof(state)*SIMULATIONS, cudaMemcpyHostToDevice);\n'+
                     '   int threads = 1024;\n'+
                     '   dim3 block(threads);\n'+
-                    '   dim3 grid((MAX_ESTADO + block.x -1)/block.x);\n'+
+                    '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
                     '   network_simulation<<<grid,block>>>(state * randState, state * statef, unsigned long long SIMULATIONS);\n'+
                     '   cudaDeviceSynchronize();\n'+
                     '   cudaMemcpy(randState_h, randState_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
