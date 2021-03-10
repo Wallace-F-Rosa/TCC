@@ -98,7 +98,7 @@ def generateCudaCode(weights_file_path):
     code_file.write('   srand(time(NULL))\n')
     code_file.write('   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n')
     for i in range(stateSize):
-        code.write('        randState[i]['+str(i)+'] = rand()%((unsigned long)(1<<31)-1);\n')
+        code_file.write('        randState[i]['+str(i)+'] = rand()%((unsigned long)(1<<31)-1);\n')
     code_file.write('       \n')
     code_file.write('   }\n')
     code_file.write('   \n')
