@@ -77,6 +77,8 @@ def generateCudaCode(weights_file_path):
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
+            if y != weightsSize[i] - 1:
+                eq+=' + '
         eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
         code_file.write(eq)
             
