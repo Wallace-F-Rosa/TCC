@@ -124,10 +124,10 @@ def generateCudaCode(weights_file_path):
                     '   int threads = 1024;\n'+
                     '   dim3 block(threads);\n'+
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
-                    '   network_simulation<<<grid,block>>>(state * randState, state * statef, unsigned long long SIMULATIONS);\n'+
+                    '   network_simulation<<<grid,block>>>(randState_d, statef_d, SIMULATIONS);\n'+
                     '   cudaDeviceSynchronize();\n'+
                     '   cudaMemcpy(randState_h, randState_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
-                    '   output_atractors(statef_h, SIMULATIONS);\n'
+                    '   output_atractors(stataf_h, SIMULATIONS);\n'
                     '   return 0;'+
                     '}\n')
 
