@@ -28,7 +28,7 @@ def generateCudaCode(weights_file_path):
     # estado é um vetor de inteiros
     # cada bit representa um vértice
     stateSize = networkSize//64 + (networkSize%64 != 0)
-    code_file.write('typedef unsigned long long['+str(stateSize)+'] state;\n')
+    code_file.write('typedef unsigned long long state['+str(stateSize)+'];\n')
 
     #função de comparação entre estados
     code_file.write('__device__ bool equals(state a, state b) {\n'+
