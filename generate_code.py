@@ -136,7 +136,7 @@ def generateCudaCode(weights_file_path):
     # TODO: função que imprime atratores encontrados num arquivo
     code_file.write('void output_atractors(state * statef, unsigned long long SIMULATIONS) {\n'+
                     ''+
-                    '}')
+                    '}\n')
 
     # inicializa estados inicias aleatoriamente
     code_file.write('void init_rand(state * randState, unsigned long long SIMULATIONS) {\n')
