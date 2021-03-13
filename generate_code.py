@@ -31,7 +31,7 @@ def generateCudaCode(weights_file_path):
     code_file.write('typedef unsigned long long state['+str(stateSize)+'];\n')
 
     # função de comparação entre estados kernel
-    code_file.write('__device__ bool equals(state a, state b) {\n'+
+    code_file.write('__device__ bool equals_h(state a, state b) {\n'+
                     '   for (int i = 0; i < '+str(stateSize)+'; i++) {\n'+
                     '       if (a[i] != b[i])\n'+
                     '           return false;\n'+
@@ -40,7 +40,7 @@ def generateCudaCode(weights_file_path):
                     '}\n')
 
     # função de comparação entre estados host
-    code_file.write('bool equals(state a, state b) {\n'+
+    code_file.write('bool equals_d(state a, state b) {\n'+
                     '   for (int i = 0; i < '+str(stateSize)+'; i++) {\n'+
                     '       if (a[i] != b[i])\n'+
                     '           return false;\n'+
@@ -91,7 +91,7 @@ def generateCudaCode(weights_file_path):
         eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
         code_file.write(eq)
             
-    code_file.write('       } while(!equals(state0, state1));\n')
+    code_file.write('       } while(!equals_d(state0, state1));\n')
 
     # salva o estado inicial do atrator na memória global da gpu
     for i in range(stateSize) :
@@ -135,7 +135,7 @@ def generateCudaCode(weights_file_path):
         eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
         code_file.write(eq)
             
-    code_file.write('       } while(!equals(state0, state1));\n')
+    code_file.write('       } while(!equals_h(state0, state1));\n')
 
     # salva o estado inicial do atrator na memória global da gpu
     for i in range(stateSize) :
