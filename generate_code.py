@@ -30,8 +30,17 @@ def generateCudaCode(weights_file_path):
     stateSize = networkSize//64 + (networkSize%64 != 0)
     code_file.write('typedef unsigned long long state['+str(stateSize)+'];\n')
 
-    #função de comparação entre estados
+    # função de comparação entre estados kernel
     code_file.write('__device__ bool equals(state a, state b) {\n'+
+                    '   for (int i = 0; i < '+str(stateSize)+'; i++) {\n'+
+                    '       if (a[i] != b[i])\n'+
+                    '           return false;\n'+
+                    '   }\n'+
+                    '   return true;\n'+
+                    '}\n')
+
+    # função de comparação entre estados host
+    code_file.write('bool equals(state a, state b) {\n'+
                     '   for (int i = 0; i < '+str(stateSize)+'; i++) {\n'+
                     '       if (a[i] != b[i])\n'+
                     '           return false;\n'+
