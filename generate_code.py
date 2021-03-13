@@ -82,7 +82,7 @@ def generateCudaCode(weights_file_path):
         eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
         code_file.write(eq)
             
-    code_file.write('       } while(equals(state0, state1));\n')
+    code_file.write('       } while(!equals(state0, state1));\n')
 
     # salva o estado inicial do atrator na memória global da gpu
     for i in range(stateSize) :
@@ -100,8 +100,9 @@ def generateCudaCode(weights_file_path):
     for i in range(stateSize):
         code_file.write('       state0['+str(i)+'] = randState[tid]['+str(i)+'];\n'+
                         '       state1['+str(i)+'] = 0;\n')
+    code_file.write('   do {\n')
     for i in range(networkSize) :
-        eq = '          state1['+str(i//64)+'] |= (unsigned long long) ( ( '
+        eq = '      state1['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
@@ -116,7 +117,7 @@ def generateCudaCode(weights_file_path):
 
     # aplicamos as equações novamente em estado1 para andar 2 passos
     for i in range(networkSize) :
-        eq = '          state1['+str(i//64)+'] |= (unsigned long long) ( ( '
+        eq = '      state1['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
@@ -125,12 +126,12 @@ def generateCudaCode(weights_file_path):
         eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
         code_file.write(eq)
             
-    code_file.write('       } while(equals(state0, state1));\n')
+    code_file.write('       } while(!equals(state0, state1));\n')
 
     # salva o estado inicial do atrator na memória global da gpu
     for i in range(stateSize) :
         code_file.write('       statef[tid]['+str(i)+'] = state1['+str(i)+'];\n')
-    code_file.write('   }'+
+    code_file.write('   }\n'+
                     '}\n')
 
     # TODO: função que imprime atratores encontrados num arquivo
