@@ -58,7 +58,7 @@ def generateCudaCode(weights_file_path):
     # gerando equações do passo 1 (estado0 anda um passo)
     # FIXME: kernel não roda quando temos muitas instruções de equação
     for i in range(networkSize) :
-        eq = '          state1['+str(i//64)+'] |= (unsigned long long) ( ( '
+        eq = '          state1['+str(i//64)+'] |= ( (unsigned long long) ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
@@ -73,7 +73,7 @@ def generateCudaCode(weights_file_path):
 
     # aplicamos as equações novamente em estado1 para andar 2 passos
     for i in range(networkSize) :
-        eq = '          state1['+str(i//64)+'] |= (unsigned long long) ( ( '
+        eq = '          state1['+str(i//64)+'] |= ( (unsigned long long) ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
@@ -92,7 +92,7 @@ def generateCudaCode(weights_file_path):
 
     code_file.write('\n')
 
-    # TODO: versão cpu do calculo de atratores
+    # versão cpu do calculo de atratores
     code_file.write('void network_simulation_cpu(state * randState, state * statef, unsigned long long SIMULATIONS){\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
                     '       state state0, state1;\n')
@@ -102,7 +102,7 @@ def generateCudaCode(weights_file_path):
                         '       state1['+str(i)+'] = 0;\n')
     code_file.write('   do {\n')
     for i in range(networkSize) :
-        eq = '      state1['+str(i//64)+'] |= (unsigned long long) ( ( '
+        eq = '      state1['+str(i//64)+'] |= ( (unsigned long long) ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
@@ -117,7 +117,7 @@ def generateCudaCode(weights_file_path):
 
     # aplicamos as equações novamente em estado1 para andar 2 passos
     for i in range(networkSize) :
-        eq = '      state1['+str(i//64)+'] |= (unsigned long long) ( ( '
+        eq = '      state1['+str(i//64)+'] |= ( (unsigned long long) ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
