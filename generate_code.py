@@ -100,9 +100,9 @@ def generateCudaCode(weights_file_path):
     for i in range(stateSize):
         code_file.write('       state0['+str(i)+'] = randState[i]['+str(i)+'];\n'+
                         '       state1['+str(i)+'] = 0;\n')
-    code_file.write('   do {\n')
+    code_file.write('       do {\n')
     for i in range(networkSize) :
-        eq = '      state1['+str(i//64)+'] |= ( (unsigned long long) ( '
+        eq = '          state1['+str(i//64)+'] |= ( (unsigned long long) ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
@@ -113,11 +113,11 @@ def generateCudaCode(weights_file_path):
 
     # estado0 recebe estado1, andamos 1 passo com as equações da rede
     for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'];\n')
+        code_file.write('           state0['+str(i)+'] = state1['+str(i)+'];\n')
 
     # aplicamos as equações novamente em estado1 para andar 2 passos
     for i in range(networkSize) :
-        eq = '      state1['+str(i//64)+'] |= ( (unsigned long long) ( '
+        eq = '          state1['+str(i//64)+'] |= ( (unsigned long long) ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
@@ -130,7 +130,7 @@ def generateCudaCode(weights_file_path):
 
     # salva o estado inicial do atrator na memória global da gpu
     for i in range(stateSize) :
-        code_file.write('       statef[tid]['+str(i)+'] = state1['+str(i)+'];\n')
+        code_file.write('       statef[i]['+str(i)+'] = state1['+str(i)+'];\n')
     code_file.write('   }\n'+
                     '}\n')
 
