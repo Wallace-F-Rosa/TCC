@@ -93,12 +93,12 @@ def generateCudaCode(weights_file_path):
     code_file.write('\n')
 
     # TODO: versão cpu do calculo de atratores
-    code_file.write('void atratores_cpu(state * randState, state * statef, unsigned long long SIMULATIONS){\n'+
+    code_file.write('void network_simulation_cpu(state * randState, state * statef, unsigned long long SIMULATIONS){\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
                     '       state state0, state1;\n')
     # inicializando estados
     for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = randState[tid]['+str(i)+'];\n'+
+        code_file.write('       state0['+str(i)+'] = randState[i]['+str(i)+'];\n'+
                         '       state1['+str(i)+'] = 0;\n')
     code_file.write('   do {\n')
     for i in range(networkSize) :
