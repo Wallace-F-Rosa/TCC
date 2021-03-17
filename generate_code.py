@@ -61,19 +61,20 @@ def generateCudaCode(weights_file_path):
 
     code_file.write('       do {\n')
 
+    # GPU
     # equações : 
     # estadof[var//64] = 0
     # estadof[var//64] |= ( ( ( (estado0[i//64] >> var) % 2 )*peso + ( (estado0[i//64] >> var) % 2 )*peso  ...) >= lim) << var;
     # gerando equações do passo 1 (estado0 anda um passo)
     # FIXME: kernel não roda quando temos muitas instruções de equação
     for i in range(networkSize) :
-        eq = '          state1['+str(i//64)+'] |= ( (unsigned long long) ( '
+        eq = '          state1['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
+        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
         code_file.write(eq)
 
     # estado0 recebe estado1, andamos 1 passo com as equações da rede
@@ -82,13 +83,13 @@ def generateCudaCode(weights_file_path):
 
     # aplicamos as equações novamente em estado1 para andar 2 passos
     for i in range(networkSize) :
-        eq = '          state1['+str(i//64)+'] |= ( (unsigned long long) ( '
+        eq = '          state1['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
+        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
         code_file.write(eq)
             
     code_file.write('       } while(!equals_d(state0, state1));\n')
@@ -101,6 +102,7 @@ def generateCudaCode(weights_file_path):
 
     code_file.write('\n')
 
+    # CPU
     # versão cpu do calculo de atratores
     code_file.write('void network_simulation_cpu(state * randState, state * statef, unsigned long long SIMULATIONS){\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
@@ -111,13 +113,13 @@ def generateCudaCode(weights_file_path):
                         '       state1['+str(i)+'] = 0;\n')
     code_file.write('       do {\n')
     for i in range(networkSize) :
-        eq = '          state1['+str(i//64)+'] |= ( (unsigned long long) ( '
+        eq = '          state1['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
+        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
         code_file.write(eq)
 
     # estado0 recebe estado1, andamos 1 passo com as equações da rede
@@ -126,13 +128,13 @@ def generateCudaCode(weights_file_path):
 
     # aplicamos as equações novamente em estado1 para andar 2 passos
     for i in range(networkSize) :
-        eq = '          state1['+str(i//64)+'] |= ( (unsigned long long) ( '
+        eq = '          state1['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i)+';\n'
+        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
         code_file.write(eq)
             
     code_file.write('       } while(!equals_h(state0, state1));\n')
@@ -159,8 +161,9 @@ def generateCudaCode(weights_file_path):
     code_file.write('   \n')
     code_file.write('}\n')
 
-    # código main, alocar vetores e preencher estados iniciais com números randômicos
-    # TODO : chamar kernel e função cpu para calcular os atratores e comparar
+    # código main, aloca vetores e preencher estados iniciais com números randômicos
+    # chama kernel gpu e função cpu para calcular os atratores
+    # TODO: compara saida dos atratores para ver qual a diferença
     code_file.write('int main(int argc, char **argv) {\n'+
                     '   unsigned long long SIMULATIONS = 0;\n'+    
                     '   std::string argv2 = argv[0];\n'+
@@ -177,6 +180,7 @@ def generateCudaCode(weights_file_path):
                     '   dim3 block(threads);\n'+
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
                     '   network_simulation<<<grid,block>>>(randState_d, statef_d, SIMULATIONS);\n'+
+                    '   network_simulation_h(randState_h, statef_h, SIMULATIONS);\n'
                     '   cudaDeviceSynchronize();\n'+
                     '   cudaMemcpy(randState_h, randState_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
                     '   output_atractors(statef_h, SIMULATIONS);\n'
