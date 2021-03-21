@@ -21,6 +21,10 @@ def generateCudaCode(weights_file_path):
                     '#include <chrono>\n'+
                     '#include <ctime>\n'+
                     '#include <string>\n'+
+                    '#include <sstream>\n'+
+                    '#include <vector>\n'+
+                    '#include <map>\n'+
+                    '#include <unordered_map>\n'+
                     '#include <limits>\n'+
                     '#include <stdio.h>\n'+
                     '#include <stdlib.h>\n')
@@ -145,9 +149,72 @@ def generateCudaCode(weights_file_path):
     code_file.write('   }\n'+
                     '}\n')
 
+    # TODO: função que recebe um estado de um atrator e entrega o atrator completo
+    code_file.write("string getAtractor(state s) {\n"+
+                    "   state s0,s1,aux;\n"+
+                    '   string atractor = to_string(s0);\n'+
+                    "   for (int i = 0; i < "+str(stateSize)+")\n"+
+                    "       aux[i] = s0[i] = s1[i] = s[i];\n"+
+                    "   while(true) {\n")
+
+    for i in range(networkSize) :
+        eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
+        line = fileContent[2+i].split('\n')[0].split(' ')
+        for y in range(weightsSize[i]):
+            eq += '( ( s1['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
+            if y != weightsSize[i] - 1:
+                eq+=' + '
+        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
+        code_file.write(eq)
+ 
+    for i in range(stateSize):
+        code_file.write('           s1['+str(i)+'] = aux['+str(i)+'];\n')
+
+    code_file.write("       if (!equals_h(s0,s1)) "+
+                    "           atractor = " " + to_string(s1);\n"+
+                    "       else "+
+                    "           break;\n"+
+                    "   }\n"+
+                    "   return atractor;\n"+
+                    "}")
+
+
+    # função que converte estado para string
+    code_file.write("string to_string(state s){"+
+                    "   string result = '';\n"+
+                    "   stringstream stream;\n"+
+                    "   for(int i = 0; i < 1; i++)\n"+
+                    "       stream << s[i];\n"+
+                    "   stream >> result;\n"+
+                    "   return result;\n"+
+                    "}")
+
+    # função que junta os atratores a partir dos estados encontrados na simulação
+    # atrator é um string com os estados
+    code_file.write('vector<string> complete_atractors(state * st, unsigned long long SIMULATIONS){'+
+                    '   vector<string> atractors;'
+                    '   map<state, string> allAtractors;'+
+                    '   unordered_map<string, unsigned long> at_freq;'+
+                    '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
+                    '       if (allAtractors[st[i]]) {'+
+                    '           at_freq[allAtractors[st[i]]]++;'+
+                    '       } else {'+
+                    '           string at = getAtractor(st[i]);'+
+                    '           for (int j = 0; j < at.size(); j ++)'+
+                    '               allAtractors[at[j]] = at;'+
+                    '           at_freq[at]=1;'+
+                    '       }'+
+                    '   }'+
+                    '   return atractors;'+
+                    '}')
+
     # TODO: função que imprime atratores encontrados num arquivo
-    code_file.write('void output_atractors(state * statef, unsigned long long SIMULATIONS) {\n'+
-                    ''+
+    code_file.write('void output_atractors(vector<state> atractors, unsigned long long SIMULATIONS) {\n'+
+                    '   for (unsigned long long i = 0; i < atractors.size(); i++) {'+
+                    '       for (int j = 0; j < '+str(stateSize)+'; j++)'+
+                    "           cout << atractors[i] << ' ';"+
+                    "       cout << '\n';"+
+                    '   }'+
                     '}\n')
 
     # inicializa estados inicias aleatoriamente
@@ -166,7 +233,7 @@ def generateCudaCode(weights_file_path):
     # TODO: compara saida dos atratores para ver qual a diferença
     code_file.write('int main(int argc, char **argv) {\n'+
                     '   unsigned long long SIMULATIONS = 0;\n'+    
-                    '   std::string argv2 = argv[0];\n'+
+                    '   std::string argv2 = argv[1];\n'+
                     '   for(int i = 0; i < argv2.size() ; i++)\n'+
                     "       SIMULATIONS += ((unsigned long int)(argv2[i] - '0'))*pow(10,argv2.size()-i-1);\n"+
                     '   state * randState_h, * randState_d, * statef_h, * statef_d;\n'+
