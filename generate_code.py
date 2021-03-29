@@ -209,11 +209,9 @@ def generateCudaCode(weights_file_path):
                     '}')
 
     # TODO: função que imprime atratores encontrados num arquivo
-    code_file.write('void output_atractors(vector<state> atractors, unsigned long long SIMULATIONS) {\n'+
+    code_file.write('void output_atractors(vector<string> atractors, unsigned long long SIMULATIONS) {\n'+
                     '   for (unsigned long long i = 0; i < atractors.size(); i++) {'+
-                    '       for (int j = 0; j < '+str(stateSize)+'; j++)'+
-                    "           cout << atractors[i] << ' ';"+
-                    "       cout << '\n';"+
+                    "       cout << atractors[i] << '\n';"+
                     '   }'+
                     '}\n')
 
