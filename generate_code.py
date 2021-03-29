@@ -193,15 +193,15 @@ def generateCudaCode(weights_file_path):
     # atrator é um string com os estados
     code_file.write('vector<string> complete_atractors(state * st, unsigned long long SIMULATIONS){\n'+
                     '   vector<string> atractors;\n'
-                    '   map<state, string> allAtractors;\n'+
+                    '   map<string, string> allAtractors;\n'+
                     '   unordered_map<string, unsigned long> at_freq;\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
-                    '       if (allAtractors[st[i]]) {\n'+
-                    '           at_freq[allAtractors[st[i]]]++;\n'+
+                    '       if (allAtractors.count(to_string(st[i])]) == 0) {\n'+
+                    '           at_freq[allAtractors[to_string(st[i])]]++;\n'+
                     '       } else {\n'+
                     '           string at = getAtractor(st[i]);\n'+
                     '           for (int j = 0; j < at.size(); j ++)\n'+
-                    '               allAtractors[at[j]] = at;\n'+
+                    '               allAtractors[to_string(at[j])] = at;\n'+
                     '           at_freq[at]=1;\n'+
                     '       }\n'+
                     '   }\n'+
