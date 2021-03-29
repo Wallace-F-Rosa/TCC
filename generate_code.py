@@ -170,9 +170,9 @@ def generateCudaCode(weights_file_path):
     for i in range(stateSize):
         code_file.write('           s1['+str(i)+'] = aux['+str(i)+'];\n')
 
-    code_file.write("       if (!equals_h(s0,s1)) "+
+    code_file.write("       if (!equals_h(s0,s1))\n"+
                     "           atractor = " " + to_string(s1);\n"+
-                    "       else "+
+                    "       else\n"+
                     "           break;\n"+
                     "   }\n"+
                     "   return atractor;\n"+
@@ -180,37 +180,37 @@ def generateCudaCode(weights_file_path):
 
 
     # função que converte estado para string
-    code_file.write("string to_string(state s){"+
+    code_file.write("string to_string(state s){\n"+
                     "   string result = '';\n"+
                     "   stringstream stream;\n"+
                     "   for(int i = 0; i < 1; i++)\n"+
                     "       stream << s[i];\n"+
                     "   stream >> result;\n"+
                     "   return result;\n"+
-                    "}")
+                    "}\n")
 
     # função que junta os atratores a partir dos estados encontrados na simulação
     # atrator é um string com os estados
-    code_file.write('vector<string> complete_atractors(state * st, unsigned long long SIMULATIONS){'+
-                    '   vector<string> atractors;'
-                    '   map<state, string> allAtractors;'+
-                    '   unordered_map<string, unsigned long> at_freq;'+
+    code_file.write('vector<string> complete_atractors(state * st, unsigned long long SIMULATIONS){\n'+
+                    '   vector<string> atractors;\n'
+                    '   map<state, string> allAtractors;\n'+
+                    '   unordered_map<string, unsigned long> at_freq;\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
-                    '       if (allAtractors[st[i]]) {'+
-                    '           at_freq[allAtractors[st[i]]]++;'+
-                    '       } else {'+
-                    '           string at = getAtractor(st[i]);'+
-                    '           for (int j = 0; j < at.size(); j ++)'+
-                    '               allAtractors[at[j]] = at;'+
-                    '           at_freq[at]=1;'+
-                    '       }'+
-                    '   }'+
-                    '   return atractors;'+
-                    '}')
+                    '       if (allAtractors[st[i]]) {\n'+
+                    '           at_freq[allAtractors[st[i]]]++;\n'+
+                    '       } else {\n'+
+                    '           string at = getAtractor(st[i]);\n'+
+                    '           for (int j = 0; j < at.size(); j ++)\n'+
+                    '               allAtractors[at[j]] = at;\n'+
+                    '           at_freq[at]=1;\n'+
+                    '       }\n'+
+                    '   }\n'+
+                    '   return atractors;\n'+
+                    '}\n')
 
     # TODO: função que imprime atratores encontrados num arquivo
     code_file.write('void output_atractors(vector<string> atractors, unsigned long long SIMULATIONS) {\n'+
-                    '   for (unsigned long long i = 0; i < atractors.size(); i++) {'+
+                    '   for (unsigned long long i = 0; i < atractors.size(); i++) {\n'+
                     "       cout << atractors[i] << '\n';"+
                     '   }'+
                     '}\n')
