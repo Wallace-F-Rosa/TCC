@@ -212,7 +212,7 @@ def generateCudaCode(weights_file_path):
     code_file.write('void output_atractors(vector<string> atractors, unsigned long long SIMULATIONS) {\n'+
                     '   for (unsigned long long i = 0; i < atractors.size(); i++) {\n'+
                     "       cout << atractors[i] << '\n';"+
-                    '   }'+
+                    '   }\n'+
                     '}\n')
 
     # inicializa estados inicias aleatoriamente
