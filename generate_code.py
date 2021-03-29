@@ -150,6 +150,16 @@ def generateCudaCode(weights_file_path):
     code_file.write('   }\n'+
                     '}\n')
 
+    # função que converte estado para string
+    code_file.write("string to_string(state s){\n"+
+                    "   string result = '';\n"+
+                    "   stringstream stream;\n"+
+                    "   for(int i = 0; i < 1; i++)\n"+
+                    "       stream << s[i];\n"+
+                    "   stream >> result;\n"+
+                    "   return result;\n"+
+                    "}\n")
+
     # TODO: função que recebe um estado de um atrator e entrega o atrator completo
     code_file.write("string getAtractor(state s) {\n"+
                     "   state s0,s1,aux;\n"+
@@ -172,22 +182,11 @@ def generateCudaCode(weights_file_path):
         code_file.write('           s1['+str(i)+'] = aux['+str(i)+'];\n')
 
     code_file.write("       if (!equals_h(s0,s1))\n"+
-                    "           atractor = " " + to_string(s1);\n"+
+                    "           atractor += ' ' + to_string(s1);\n"+
                     "       else\n"+
                     "           break;\n"+
                     "   }\n"+
                     "   return atractor;\n"+
-                    "}")
-
-
-    # função que converte estado para string
-    code_file.write("string to_string(state s){\n"+
-                    "   string result = '';\n"+
-                    "   stringstream stream;\n"+
-                    "   for(int i = 0; i < 1; i++)\n"+
-                    "       stream << s[i];\n"+
-                    "   stream >> result;\n"+
-                    "   return result;\n"+
                     "}\n")
 
     # função que junta os atratores a partir dos estados encontrados na simulação
