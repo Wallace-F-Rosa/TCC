@@ -54,7 +54,7 @@ def generateCudaCode(weights_file_path):
                     '}\n')
 
     # cuda kernel recebe os estados aleatórios inicialmente, simulando N estados até o número de simulações fornecido
-    code_file.write('__global__ void network_simulation(state * randState, state * statef, unsigned long long SIMULATIONS) {\n'+
+    code_file.write('__global__ void network_simulation_d(state * randState, state * statef, unsigned long long SIMULATIONS) {\n'+
                     '   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n'+
                     '   state state0, state1;\n'+
                     '   if (tid < SIMULATIONS) {\n')
@@ -109,7 +109,7 @@ def generateCudaCode(weights_file_path):
 
     # CPU
     # versão cpu do calculo de atratores
-    code_file.write('void network_simulation_cpu(state * randState, state * statef, unsigned long long SIMULATIONS){\n'+
+    code_file.write('void network_simulation_h(state * randState, state * statef, unsigned long long SIMULATIONS){\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
                     '       state state0, state1;\n')
     # inicializando estados
