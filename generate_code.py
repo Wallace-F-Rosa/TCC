@@ -27,7 +27,8 @@ def generateCudaCode(weights_file_path):
                     '#include <unordered_map>\n'+
                     '#include <limits>\n'+
                     '#include <stdio.h>\n'+
-                    '#include <stdlib.h>\n')
+                    '#include <stdlib.h>\n'+
+                    '\nusing namespace std;\n')
 
     # estado é um vetor de inteiros
     # cada bit representa um vértice
