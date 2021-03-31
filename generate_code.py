@@ -182,7 +182,7 @@ def generateCudaCode(weights_file_path):
         code_file.write('           s1['+str(i)+'] = aux['+str(i)+'];\n')
 
     code_file.write("       if (!equals_h(s0,s1))\n"+
-                    "           atractor += "+ repr(' ') + "to_string(s1);\n"+
+                    "           atractor += "+ repr(' ') + " + to_string(s1);\n"+
                     "       else\n"+
                     "           break;\n"+
                     "   }\n"+
