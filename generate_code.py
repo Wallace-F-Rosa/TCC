@@ -182,7 +182,7 @@ def generateCudaCode(weights_file_path):
         code_file.write('           s1['+str(i)+'] = aux['+str(i)+'];\n')
 
     code_file.write("       if (!equals_h(s0,s1))\n"+
-                    "           atractor += ' ' + to_string(s1);\n"+
+                    "           atractor += "+ repr(' ') + "to_string(s1);\n"+
                     "       else\n"+
                     "           break;\n"+
                     "   }\n"+
@@ -209,7 +209,7 @@ def generateCudaCode(weights_file_path):
                     '}\n')
 
     # TODO: função que imprime atratores encontrados num arquivo
-    code_file.write('void output_atractors(vector<string> atractors, unsigned long long SIMULATIONS) {\n'+
+    code_file.write('void output_atractors(vector<string> atractors) {\n'+
                     '   for (unsigned long long i = 0; i < atractors.size(); i++) {\n'+
                     "       cout << atractors[i] <<" + repr('\n') + ";\n"+
                     '   }\n'+
@@ -248,8 +248,8 @@ def generateCudaCode(weights_file_path):
                     '   network_simulation_h(randState_h, statef_h, SIMULATIONS);\n'
                     '   cudaDeviceSynchronize();\n'+
                     '   cudaMemcpy(randState_h, randState_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
-                    '   vector<string> atratores = complete_atractors(statef_d, SIMULATIONS);'
-                    '   output_atractors(atratores, SIMULATIONS);\n'
+                    '   vector<string> atratores = complete_atractors(statef_d, SIMULATIONS);\n'
+                    '   //output_atractors(atratores);\n'
                     '   return 0;'+
                     '}\n')
 
