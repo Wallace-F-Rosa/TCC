@@ -253,7 +253,7 @@ def generateCudaCode(weights_file_path):
                     '   cudaDeviceSynchronize();\n'+
                     '   cudaMemcpy(statef_h, statef_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
-                    '   //output_atractors(atratores);\n'
+                    '   output_atractors(atratores);\n'
                     '   return 0;'+
                     '}\n')
 
