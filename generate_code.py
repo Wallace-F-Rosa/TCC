@@ -177,8 +177,10 @@ def generateCudaCode(weights_file_path):
     code_file.write("string getAtractor(state s) {\n"+
                     "   state s0,s1,aux;\n"+
                     '   string atractor = to_string(s0);\n'+
-                    "   for (int i = 0; i < "+str(stateSize)+"; i++)\n"+
-                    "       aux[i] = s0[i] = s1[i] = s[i];\n"+
+                    "   for (int i = 0; i < "+str(stateSize)+"; i++){\n"+
+                    "       s0[i] = s1[i] = s[i];\n"+
+                    "       aux[i] = 0;\n"+
+                    "   }\n"+
                     "   while(true) {\n")
 
     for i in range(networkSize) :
@@ -207,17 +209,17 @@ def generateCudaCode(weights_file_path):
     # atrator é um string com os estados
     code_file.write('vector<string> complete_atractors(state * st, unsigned long long SIMULATIONS){\n'+
                     '   vector<string> atractors;\n'
-                    '   map<string, string> allAtractors;\n'+
+                    '   map<string, string> state_to_at;\n'+
                     '   unordered_map<string, unsigned long> at_freq;\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
-                    '       if (allAtractors.count(to_string(st[i])) != 0) {\n'+
-                    '           at_freq[allAtractors[to_string(st[i])]]++;\n'+
+                    '       if (state_to_at.count(to_string(st[i])) != 0) {\n'+
+                    '           at_freq[state_to_at[to_string(st[i])]]++;\n'+
                     '       } else {\n'+
                     '           string at = getAtractor(st[i]);\n'+
                     '           stringstream ss(at);'+
                     '           string s_state;'+
                     '           while (ss >> s_state){\n'+
-                    '               allAtractors[s_state] = at;\n'+
+                    '               state_to_at[s_state] = at;\n'+
                     '           }\n'+
                     '           atractors.push_back(at);\n'+
                     '           at_freq[at]=1;\n'+
