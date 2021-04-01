@@ -203,7 +203,7 @@ def generateCudaCode(weights_file_path):
                     '           string at = getAtractor(st[i]);\n'+
                     '           stringstream ss(at);'+
                     '           string s_state;'+
-                    '           while (s_state >> ss){\n'+
+                    '           while (ss >> s_state){\n'+
                     '               allAtractors[s_state] = at;\n'+
                     '           }'+
                     '           at_freq[at]=1;\n'+
