@@ -210,7 +210,7 @@ def generateCudaCode(weights_file_path):
                     '   map<string, string> allAtractors;\n'+
                     '   unordered_map<string, unsigned long> at_freq;\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
-                    '       if (allAtractors.count(to_string(st[i])) == 0) {\n'+
+                    '       if (allAtractors.count(to_string(st[i])) != 0) {\n'+
                     '           at_freq[allAtractors[to_string(st[i])]]++;\n'+
                     '       } else {\n'+
                     '           string at = getAtractor(st[i]);\n'+
