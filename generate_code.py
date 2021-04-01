@@ -154,8 +154,9 @@ def generateCudaCode(weights_file_path):
     code_file.write("string to_string(state s){\n"+
                     "   string result;\n"+
                     "   stringstream stream;\n"+
-                    "   for(int i = 0; i < 1; i++)\n"+
-                    "       stream << s[i];\n"+
+                    "   for(int i = 0; i < "+str(stateSize-1)+"; i++)\n"+
+                    "       stream << s[i] << '|';\n"+
+                    "   stream << s["+str(stateSize)+"];"+
                     "   stream >> result;\n"+
                     "   return result;\n"+
                     "}\n")
@@ -200,8 +201,11 @@ def generateCudaCode(weights_file_path):
                     '           at_freq[allAtractors[to_string(st[i])]]++;\n'+
                     '       } else {\n'+
                     '           string at = getAtractor(st[i]);\n'+
-                    '           for (int j = 0; j < at.size(); j ++)\n'+
-                    '               allAtractors[to_string(at[j])] = at;\n'+
+                    '           sstream ss(at);'+
+                    '           string s_state;'+
+                    '           while (s_state >> ss){\n'+
+                    '               allAtractors[s_state] = at;\n'+
+                    '           }'+
                     '           at_freq[at]=1;\n'+
                     '       }\n'+
                     '   }\n'+
