@@ -231,14 +231,11 @@ def generateCudaCode(weights_file_path):
                     '       if (state_to_at.count(to_string(st[i])) != 0) {\n'+
                     '           at_freq[state_to_at[to_string(st[i])]]++;\n'+
                     '       } else {\n'+
-                    '           string at = getAtractor(st[i]);\n'+
-                    '           stringstream ss(at);'+
-                    '           string s_state;'+
-                    '           while (ss >> s_state){\n'+
-                    '               state_to_at[s_state] = at;\n'+
-                    '           }\n'+
-                    '           atractors.push_back(at);\n'+
-                    '           at_freq[at]=1;\n'+
+                    '           vector<string> at = getAtractor(st[i]);\n'+
+                    '           string sat = to_string(at);\n'+
+                    '           for (int i = 0; i < at.size(); i++)\n'+
+                    '               state_to_at[at[i]] = sat;\n'+
+                    '           at_freq[sat]=1;\n'+
                     '       }\n'+
                     '   }\n'+
                     '   return atractors;\n'+
