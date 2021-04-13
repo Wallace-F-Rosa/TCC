@@ -176,7 +176,11 @@ def generateCudaCode(weights_file_path):
 
     # TODO: função que converte um atrator(vetor de estados) para string
     code_file.write("string to_string(vector<string> atractor){\n"+
-
+                    "   if(atractor.size() == 0) return ;\n"+
+                    "   string result = atractor[0];\n"+
+                    "   for (int i = 1; i < atractor.size(); i++)\n"+
+                    "       result += " " + atractor[i];\n"+
+                    "   return result;\n"+
                     "}\n")
 
     # TODO: função que recebe um estado de um atrator e entrega o atrator completo
