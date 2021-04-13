@@ -28,6 +28,7 @@ def generateCudaCode(weights_file_path):
                     '#include <limits>\n'+
                     '#include <stdio.h>\n'+
                     '#include <stdlib.h>\n'+
+                    '#include <algorithm>\n'+
                     '\nusing namespace std;\n')
 
     # estado é um vetor de inteiros
@@ -168,15 +169,21 @@ def generateCudaCode(weights_file_path):
                     "   stringstream stream;\n"+
                     "   for(int i = 0; i < "+str(stateSize-1)+"; i++)\n"+
                     "       stream << s[i] << '|';\n"+
-                    "   stream << s["+str(stateSize)+"];"+
+                    "   stream << s["+str(stateSize)+"];\n"+
                     "   stream >> result;\n"+
                     "   return result;\n"+
                     "}\n")
 
+    # TODO: função que converte um atrator(vetor de estados) para string
+    code_file.write("string to_string(vector<string> atractor){\n"+
+
+                    "}\n")
+
     # TODO: função que recebe um estado de um atrator e entrega o atrator completo
-    code_file.write("string getAtractor(state s) {\n"+
+    # em um vector<string> com representação em string do atrator
+    code_file.write("vector<string> getAtractor(state s) {\n"+
                     "   state s0,s1,aux;\n"+
-                    '   string atractor = to_string(s0);\n'+
+                    '   vector<string> atractor; atractor.push_back(to_string(s0));\n'+
                     "   for (int i = 0; i < "+str(stateSize)+"; i++){\n"+
                     "       s0[i] = s1[i] = s[i];\n"+
                     "       aux[i] = 0;\n"+
@@ -198,15 +205,18 @@ def generateCudaCode(weights_file_path):
                         '           aux['+str(i)+'] = 0;\n')
 
     code_file.write("       if (!equals_h(s0,s1))\n"+
-                    "           atractor += "+ repr(' ') + " + to_string(s1);\n"+
+                    "           atractor.push_back(to_string(s1));\n"+
                     "       else\n"+
                     "           break;\n"+
                     "   }\n"+
+                    "   sort(atractor.begin(), atractor.end());\n"+
                     "   return atractor;\n"+
                     "}\n")
 
     # função que junta os atratores a partir dos estados encontrados na simulação
     # atrator é um string com os estados
+    # FIXME: getAtractor retorna vector com estados (string) ordenados. mapear cada estado
+    # para a representação de atrator utilizando to_string(vector<string> v)
     code_file.write('vector<string> complete_atractors(state * st, unsigned long long SIMULATIONS){\n'+
                     '   vector<string> atractors;\n'
                     '   map<string, string> state_to_at;\n'+
