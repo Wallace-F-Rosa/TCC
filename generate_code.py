@@ -179,7 +179,7 @@ def generateCudaCode(weights_file_path):
                     "   if(atractor.size() == 0) return ;\n"+
                     "   string result = atractor[0];\n"+
                     "   for (int i = 1; i < atractor.size(); i++)\n"+
-                    "       result += " " + atractor[i];\n"+
+                    "       result += " + repr(" ") + " + atractor[i];\n"+
                     "   return result;\n"+
                     "}\n")
 
