@@ -242,7 +242,7 @@ def generateCudaCode(weights_file_path):
                     '}\n')
 
     # função que imprime atratores encontrados num arquivo
-    code_file.write('void output_atractors(vector<string> atractors) {\n'+
+    code_file.write('void output_atractors(const vector<string> &atractors) {\n'+
                     '   cout << "Número de atratores" << atractors.size() <<' + repr("\n") + ';\n'+
                     '   for (unsigned long long i = 0; i < atractors.size(); i++) {\n'+
                     "       cout << atractors[i] <<" + repr('\n') + ";\n"+
@@ -289,7 +289,7 @@ def generateCudaCode(weights_file_path):
                     '   cudaMemcpy(statef_h, statef_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
-                    '   //output_atractors(atratores);\n'
+                    '   output_atractors(atratores);\n'
                     '   return 0;\n'+
                     '}\n')
 
