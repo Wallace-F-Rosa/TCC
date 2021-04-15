@@ -174,7 +174,7 @@ def generateCudaCode(weights_file_path):
                     "   return result;\n"+
                     "}\n")
 
-    # TODO: função que converte um atrator(vetor de estados) para string
+    # função que converte um atrator(vetor de estados) para string
     code_file.write("string to_string(vector<string> atractor){\n"+
                     # gambiarra para imprimir aspas duplas
                     '   if(atractor.size() == 0) return "'+'";\n'+
@@ -185,7 +185,7 @@ def generateCudaCode(weights_file_path):
                     "   return result;\n"+
                     "}\n")
 
-    # TODO: função que recebe um estado de um atrator e entrega o atrator completo
+    # função que recebe um estado de um atrator e entrega o atrator completo
     # em um vector<string> com representação em string do atrator
     code_file.write("vector<string> getAtractor(state s) {\n"+
                     "   state s0,s1,aux;\n"+
@@ -221,8 +221,7 @@ def generateCudaCode(weights_file_path):
 
     # função que junta os atratores a partir dos estados encontrados na simulação
     # atrator é um string com os estados
-    # FIXME: getAtractor retorna vector com estados (string) ordenados. mapear cada estado
-    # para a representação de atrator utilizando to_string(vector<string> v)
+    # FIXME: retorna atatores vazions
     code_file.write('vector<string> complete_atractors(state * st, unsigned long long SIMULATIONS){\n'+
                     '   vector<string> atractors;\n'
                     '   map<string, string> state_to_at;\n'+
@@ -261,13 +260,14 @@ def generateCudaCode(weights_file_path):
 
     # código main, aloca vetores e preencher estados iniciais com números randômicos
     # chama kernel gpu e função cpu para calcular os atratores
-    # TODO: compara saida dos atratores para ver qual a diferença
+    # TODO: comparar saida dos atratores para ver qual a diferença
     code_file.write('int main(int argc, char **argv) {\n'+
                     '   unsigned long long SIMULATIONS = 0;\n'+    
                     '   std::string argv2 = argv[1];\n'+
                     '   for(int i = 0; i < argv2.size() ; i++)\n'+
                     "       SIMULATIONS += ((unsigned long int)(argv2[i] - '0'))*pow(10,argv2.size()-i-1);\n"+
                     '   state * state_cpu, * statef_h, * statef_d;\n'+
+                    '   cout << "Alocating memory...";\n'+
                     '   state_cpu = new state[SIMULATIONS];\n'+
                     '   statef_h = new state[SIMULATIONS];\n'+
                     '   cudaMalloc((state **)&statef_d,sizeof(state)*SIMULATIONS);\n'+
@@ -276,13 +276,19 @@ def generateCudaCode(weights_file_path):
                     '   int threads = 1024;\n'+
                     '   dim3 block(threads);\n'+
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
+                    '   cout << "[OK]" << '+repr("\n")+';\n'+
+                    '   cout << "Running Simulation...";\n'+
                     '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
                     '   network_simulation_h(statef_h, SIMULATIONS);\n'
+                    '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cudaDeviceSynchronize();\n'+
+                    '   cout << "Getting atractors found...";\n'+
+                    '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
                     '   cudaMemcpy(statef_h, statef_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
+                    '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   output_atractors(atratores);\n'
-                    '   return 0;'+
+                    '   return 0;\n'+
                     '}\n')
 
     code_file.close()
