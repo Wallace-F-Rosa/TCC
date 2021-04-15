@@ -232,6 +232,7 @@ def generateCudaCode(weights_file_path):
                     '       } else {\n'+
                     '           vector<string> at = getAtractor(st[i]);\n'+
                     '           string sat = to_string(at);\n'+
+                    '           cout << to_string(at) <<'+ repr("\n") +';\n'+
                     '           for (int i = 0; i < at.size(); i++)\n'+
                     '               state_to_at[at[i]] = sat;\n'+
                     '           at_freq[sat]=1;\n'+
@@ -287,7 +288,7 @@ def generateCudaCode(weights_file_path):
                     '   cudaMemcpy(statef_h, statef_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
-                    '   output_atractors(atratores);\n'
+                    '   //output_atractors(atratores);\n'
                     '   return 0;\n'+
                     '}\n')
 
