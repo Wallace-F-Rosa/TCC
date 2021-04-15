@@ -232,7 +232,7 @@ def generateCudaCode(weights_file_path):
                     '       } else {\n'+
                     '           vector<string> at = getAtractor(st[i]);\n'+
                     '           string sat = to_string(at);\n'+
-                    '           cout << to_string(at) <<'+ repr("\n") +';\n'+
+                    #'           cout << sat <<'+ repr("\n") +';\n'+
                     '           for (int i = 0; i < at.size(); i++)\n'+
                     '               state_to_at[at[i]] = sat;\n'+
                     '           at_freq[sat]=1;\n'+
@@ -243,6 +243,7 @@ def generateCudaCode(weights_file_path):
 
     # função que imprime atratores encontrados num arquivo
     code_file.write('void output_atractors(vector<string> atractors) {\n'+
+                    '   cout << "Número de atratores" << atractors.size() <<' + repr("\n") + ';\n'+
                     '   for (unsigned long long i = 0; i < atractors.size(); i++) {\n'+
                     "       cout << atractors[i] <<" + repr('\n') + ";\n"+
                     '   }\n'+
