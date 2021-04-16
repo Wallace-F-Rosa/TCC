@@ -227,10 +227,11 @@ def generateCudaCode(weights_file_path):
                     '   map<string, string> state_to_at;\n'+
                     '   unordered_map<string, unsigned long> at_freq;\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
-                    '       if (state_to_at.count(to_string(st[i])) > 0) {\n'+
-                    '           at_freq[state_to_at[to_string(st[i])]]++;\n'+
+                    '       string sst = to_string(st[i]);'
+                    '       if (state_to_at.count(sst) > 0) {\n'+
+                    '           at_freq[state_to_at[sst]]++;\n'+
                     '       } else {\n'+
-                    '           cout << to_string(st[i]) << '+repr("\n")+';\n'+
+                    '           cout << sst << '+repr("\n")+';\n'+
                     '           vector<string> at = getAtractor(st[i]);\n'+
                     '           string sat = to_string(at);\n'+
                     '           atractors.push_back(sat);\n'+
