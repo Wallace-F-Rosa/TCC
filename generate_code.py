@@ -232,7 +232,7 @@ def generateCudaCode(weights_file_path):
                     '       } else {\n'+
                     '           vector<string> at = getAtractor(st[i]);\n'+
                     '           string sat = to_string(at);\n'+
-                    #'           cout << sat <<'+ repr("\n") +';\n'+
+                    '           atractors.push_back(sat);\n'+
                     '           for (int i = 0; i < at.size(); i++)\n'+
                     '               state_to_at[at[i]] = sat;\n'+
                     '           at_freq[sat]=1;\n'+
