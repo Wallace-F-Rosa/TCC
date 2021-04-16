@@ -167,9 +167,9 @@ def generateCudaCode(weights_file_path):
     code_file.write("string to_string(state s){\n"+
                     "   string result;\n"+
                     "   stringstream stream;\n"+
-                    "   for(int i = 0; i < "+str(stateSize-1)+"; i++)\n"+
-                    "       stream << s[i] << '|';\n"+
-                    "   stream << s["+str(stateSize)+"];\n"+
+                    "   stream << s[0];"
+                    "   for(int i = 1; i < "+str(stateSize-1)+"; i++)\n"+
+                    "       stream << '|' << s[i];\n"+
                     "   stream >> result;\n"+
                     "   return result;\n"+
                     "}\n")
@@ -227,7 +227,7 @@ def generateCudaCode(weights_file_path):
                     '   map<string, string> state_to_at;\n'+
                     '   unordered_map<string, unsigned long> at_freq;\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
-                    '       if (state_to_at.count(to_string(st[i])) != 0) {\n'+
+                    '       if (state_to_at.count(to_string(st[i])) > 0) {\n'+
                     '           at_freq[state_to_at[to_string(st[i])]]++;\n'+
                     '       } else {\n'+
                     '           vector<string> at = getAtractor(st[i]);\n'+
@@ -243,7 +243,6 @@ def generateCudaCode(weights_file_path):
 
     # função que imprime atratores encontrados num arquivo
     code_file.write('void output_atractors(const vector<string> &atractors) {\n'+
-                    '   cout << "Número de atratores" << atractors.size() <<' + repr("\n") + ';\n'+
                     '   for (unsigned long long i = 0; i < atractors.size(); i++) {\n'+
                     "       cout << atractors[i] <<" + repr('\n') + ";\n"+
                     '   }\n'+
