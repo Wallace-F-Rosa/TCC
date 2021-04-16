@@ -189,7 +189,7 @@ def generateCudaCode(weights_file_path):
     # em um vector<string> com representação em string do atrator
     code_file.write("vector<string> getAtractor(state s) {\n"+
                     "   state s0,s1,aux;\n"+
-                    '   vector<string> atractor; atractor.push_back(to_string(s0));\n'+
+                    '   vector<string> atractor; atractor.push_back(to_string(s));\n'+
                     "   for (int i = 0; i < "+str(stateSize)+"; i++){\n"+
                     "       s0[i] = s1[i] = s[i];\n"+
                     "       aux[i] = 0;\n"+
@@ -237,7 +237,7 @@ def generateCudaCode(weights_file_path):
                     '           atractors.push_back(sat);\n'+
                     '           for (int j = 0; j < at.size(); j++)\n'+
                     '               state_to_at[at[j]] = sat;\n'+
-                    '           cout << "Atractor" << sat << '+repr("\n")+';\n'+
+                    '           cout << "Atractor : " << sat << '+repr("\n")+';\n'+
                     '           at_freq[sat]=1;\n'+
                     '       }\n'+
                     '   }\n'+
