@@ -292,7 +292,7 @@ def generateCudaCode(weights_file_path):
                     '   cout << "Initiating values...";\n'+
                     '   init_rand_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
                     '   cudaDeviceSynchronize();\n'+
-                    '   cudaMemcpy(statef_cpu, state_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
+                    '   cudaMemcpy(statef_h, statef_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
                     '   cout << "[OK]";\n'+
                     '   cout << "Running Simulation...";\n'+
                     '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
