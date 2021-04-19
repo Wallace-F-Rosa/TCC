@@ -21,6 +21,7 @@ def generateCudaCode(weights_file_path):
                     '#include <chrono>\n'+
                     '#include <ctime>\n'+
                     '#include <string>\n'+
+                    '#include <fstream>\n'+
                     '#include <sstream>\n'+
                     '#include <vector>\n'+
                     '#include <map>\n'+
@@ -29,6 +30,7 @@ def generateCudaCode(weights_file_path):
                     '#include <stdio.h>\n'+
                     '#include <stdlib.h>\n'+
                     '#include <algorithm>\n'+
+                    '#include <curand.h>\n'+
                     '\nusing namespace std;\n')
 
     # estado é um vetor de inteiros
@@ -221,7 +223,6 @@ def generateCudaCode(weights_file_path):
 
     # função que junta os atratores a partir dos estados encontrados na simulação
     # atrator é um string com os estados
-    # FIXME: retorna atatores vazions
     code_file.write('vector<string> complete_atractors(state * st, unsigned long long SIMULATIONS){\n'+
                     '   vector<string> atractors;\n'
                     '   unordered_map<string, string> state_to_at;\n'+
@@ -249,7 +250,7 @@ def generateCudaCode(weights_file_path):
                     '   }\n'+
                     '}\n')
 
-    # inicializa estados inicias aleatoriamente
+    # inicializa estados inicias aleatoriamente na cpu
     code_file.write('void init_rand(state * randState, unsigned long long SIMULATIONS) {\n')
     code_file.write('   srand(time(NULL));\n')
     code_file.write('   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n')
@@ -260,25 +261,39 @@ def generateCudaCode(weights_file_path):
     code_file.write('   \n')
     code_file.write('}\n')
 
+    # TODO: inicialização de estados com números aleatórios na gpu
+    code_file.write('__global__ void init_rand_d(state * init_state, unsigned long long SIMULATIONS) {\n'+
+                    '   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n'+
+                    '   if(idx < SIMULATIONS){\n'+
+                    '       curandGenerator_t gen;\n'+
+                    '       curandCreateGenerator(&gen, CURAND_RNG_QUASI_SOBOL64);\n'+
+                    '       curandGenerateLongLong(gen, init_state[i], ' + str(stateSize) + ');\n'+
+                    '   }\n'+
+                    '}\n')
+
     # código main, aloca vetores e preencher estados iniciais com números randômicos
     # chama kernel gpu e função cpu para calcular os atratores
     # TODO: comparar saida dos atratores para ver qual a diferença
+    # TODO: medir tempo de execução em cpu e gpu e gerar gráficos de comparacao
     code_file.write('int main(int argc, char **argv) {\n'+
                     '   unsigned long long SIMULATIONS = 0;\n'+    
                     '   std::string argv2 = argv[1];\n'+
                     '   for(int i = 0; i < argv2.size() ; i++)\n'+
                     "       SIMULATIONS += ((unsigned long int)(argv2[i] - '0'))*pow(10,argv2.size()-i-1);\n"+
-                    '   state * state_cpu, * statef_h, * statef_d;\n'+
                     '   cout << "Alocating memory...";\n'+
+                    '   state * state_cpu, * statef_h, * statef_d;\n'+
                     '   state_cpu = new state[SIMULATIONS];\n'+
                     '   statef_h = new state[SIMULATIONS];\n'+
                     '   cudaMalloc((state **)&statef_d,sizeof(state)*SIMULATIONS);\n'+
-                    '   init_rand(state_cpu, SIMULATIONS);\n'+
-                    '   cudaMemcpy(statef_d, state_cpu, sizeof(state)*SIMULATIONS, cudaMemcpyHostToDevice);\n'+
                     '   int threads = 1024;\n'+
                     '   dim3 block(threads);\n'+
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
+                    '   cout << "Initiating values...";\n'+
+                    '   init_rand_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
+                    '   cudaDeviceSynchronize();\n'+
+                    '   cudaMemcpy(statef_cpu, state_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
+                    '   cout << "[OK]";\n'+
                     '   cout << "Running Simulation...";\n'+
                     '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
                     '   network_simulation_h(statef_h, SIMULATIONS);\n'
@@ -296,8 +311,10 @@ def generateCudaCode(weights_file_path):
     code_file.close()
 
 if __name__ == '__main__' :
-    """ Função main recebe arquivo de rede como parâmetro e gera como saída
-    um arquivo tlf.cu para simulação da rede em CUDA"""
+    """
+        Função main recebe arquivo de rede como parâmetro e gera como saída
+    um arquivo tlf.cu para simulação da rede em CUDA
+    """
     # try :
     weights_file_path = sys.argv[1]
     print(weights_file_path)
