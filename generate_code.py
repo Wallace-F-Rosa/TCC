@@ -264,10 +264,10 @@ def generateCudaCode(weights_file_path):
     # TODO: inicialização de estados com números aleatórios na gpu
     code_file.write('__global__ void init_rand_d(state * init_state, unsigned long long SIMULATIONS) {\n'+
                     '   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n'+
-                    '   if(idx < SIMULATIONS){\n'+
+                    '   if(tid < SIMULATIONS){\n'+
                     '       curandGenerator_t gen;\n'+
                     '       curandCreateGenerator(&gen, CURAND_RNG_QUASI_SOBOL64);\n'+
-                    '       curandGenerateLongLong(gen, init_state[i], ' + str(stateSize) + ');\n'+
+                    '       curandGenerateLongLong(gen, init_state[tid], ' + str(stateSize) + ');\n'+
                     '   }\n'+
                     '}\n')
 
