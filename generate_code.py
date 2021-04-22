@@ -269,7 +269,7 @@ def generateCudaCode(weights_file_path):
     code_file.write('void init_rand(state * state_d, unsigned long long SIMULATIONS, dim3 grid, dim3 block) {\n'+
                     '   curandGenerator_t gen;\n'+
                     '   unsigned long long * v_d;\n'+
-                    '   cudaMalloc((unsigned long long **)&v_d, sizeof(unsigned long long)*SIMULATIONS);\n'+
+                    '   cudaMalloc((unsigned long long **)&v_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +');\n'+
                     '   curandCreateGenerator(&gen, CURAND_RNG_QUASI_SOBOL64);\n'+
                     '   curandGenerateLongLong(gen, v_d, '+ str(stateSize) +'*SIMULATIONS);\n'+
                     '   cpRand<<<grid, block>>>(state_d, v_d, SIMULATIONS);\n'+
