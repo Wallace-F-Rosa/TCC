@@ -246,35 +246,40 @@ def generateCudaCode(weights_file_path):
     # função que imprime atratores encontrados num arquivo
     code_file.write('void output_atractors(const vector<string> &atractors) {\n'+
                     '   for (unsigned long long i = 0; i < atractors.size(); i++) {\n'+
-                    "       cout << atractors[i] <<" + repr('\n') + ";\n"+
+                    "       cout << atractors[i] <<"+ repr('\n') +";\n"+
                     '   }\n'+
                     '}\n')
 
-    # inicializa estados inicias aleatoriamente na cpu
-    code_file.write('void init_rand(state * randState, unsigned long long SIMULATIONS) {\n')
-    code_file.write('   srand(time(NULL));\n')
-    code_file.write('   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n')
-    for i in range(stateSize):
-        code_file.write('        randState[i]['+str(i)+'] = rand()%((unsigned long long)(1ULL<<63)-1ULL);\n')
-    code_file.write('       \n')
-    code_file.write('   }\n')
-    code_file.write('   \n')
-    code_file.write('}\n')
-
-    # TODO: inicialização de estados com números aleatórios na gpu
-    code_file.write('__global__ void init_rand_d(state * init_state, unsigned long long SIMULATIONS) {\n'+
+    # inicializa estados inicias aleatoriamente na gpu
+    # geradore de long long sobol64. chamada no host
+    # criar vetor do tipo v_d[stateSize*SIMULATIONS] memória device
+    # gerar SIMULATIONS números aleatórios com curandGenerateLongLong(gerador, &v_d, stateSize*SIMULATIONS)
+    # criar kernel para copiar números para vetor de estados fazendo tipo:
+    # for (i = 0; i < SIMULATIONS; i++)
+    #   for(j = 0; j < stateSize; j++)
+    #       estado[i][j] = v[j + i*SIMULATIONS]
+    code_file.write('__global__ void cpRand(state * state_d, unsigned long long * rand, unsigned long long SIMULATIONS){\n'+
                     '   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n'+
-                    '   if(tid < SIMULATIONS){\n'+
-                    '       curandGenerator_t gen;\n'+
-                    '       curandCreateGenerator(&gen, CURAND_RNG_QUASI_SOBOL64);\n'+
-                    '       curandGenerateLongLong(gen, init_state[tid], ' + str(stateSize) + ');\n'+
+                    '   if (tid < SIMULATIONS) {\n'+
+                    '       for (size_t i = 0; i < '+ str(stateSize) +'; i++)\n'+
+                    '           state_d[tid][i] = v_d[tid + i*SIMULATIONS];\n'+
                     '   }\n'+
+                    '}\n')
+
+    code_file.write('void init_rand(state * state_d, unsigned long long SIMULATIONS, dim3 grid, dim3 block) {\n'+
+                    '   curandGenerator_t gen;\n'+
+                    '   unsigned long long * v_d;\n'+
+                    '   cudaMalloc((unsigned long long **)&v_d, sizeof(unsigned long long)*SIMULATIONS);\n'+
+                    '   curandCreateGenerator(&gen, CURAND_RNG_QUASI_SOBOL64);\n'+
+                    '   curandGenerateLongLong(gen, v_d, '+ str(stateSize) +'*SIMULATIONS);\n'+
+                    '   cpRand<<<grid, block>>>(state_d, v_d, SIMULATIONS);\n'+
+                    '   cudaDeviceSynchronize();\n'+
                     '}\n')
 
     # código main, aloca vetores e preencher estados iniciais com números randômicos
     # chama kernel gpu e função cpu para calcular os atratores
-    # TODO: comparar saida dos atratores para ver qual a diferença
     # TODO: medir tempo de execução em cpu e gpu e gerar gráficos de comparacao
+    # TODO: comparar saida dos atratores para ver qual a diferença entre booleano e tlf
     code_file.write('int main(int argc, char **argv) {\n'+
                     '   unsigned long long SIMULATIONS = 0;\n'+    
                     '   std::string argv2 = argv[1];\n'+
@@ -290,9 +295,8 @@ def generateCudaCode(weights_file_path):
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Initiating values...";\n'+
-                    '   init_rand_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
-                    '   cudaDeviceSynchronize();\n'+
-                    '   cudaMemcpy(statef_h, statef_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
+                    '   init_rand(statef_h, SIMULATIONS);\n'+
+                    '   cudaMemcpy(statef_d, statef_h, sizeof(state)*SIMULATIONS, cudaMemcpyHostToDevice);\n'+
                     '   cout << "[OK]";\n'+
                     '   cout << "Running Simulation...";\n'+
                     '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
