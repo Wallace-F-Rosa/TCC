@@ -262,7 +262,7 @@ def generateCudaCode(weights_file_path):
                     '   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n'+
                     '   if (tid < SIMULATIONS) {\n'+
                     '       for (size_t i = 0; i < '+ str(stateSize) +'; i++)\n'+
-                    '           state_d[tid][i] = v_d[tid + i*SIMULATIONS];\n'+
+                    '           state_d[tid][i] = rand[tid + i*SIMULATIONS];\n'+
                     '   }\n'+
                     '}\n')
 
@@ -295,7 +295,7 @@ def generateCudaCode(weights_file_path):
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Initiating values...";\n'+
-                    '   init_rand(statef_h, SIMULATIONS);\n'+
+                    '   init_rand(statef_h, SIMULATIONS, grid, block);\n'+
                     '   cudaMemcpy(statef_d, statef_h, sizeof(state)*SIMULATIONS, cudaMemcpyHostToDevice);\n'+
                     '   cout << "[OK]";\n'+
                     '   cout << "Running Simulation...";\n'+
