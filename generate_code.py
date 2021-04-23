@@ -33,7 +33,14 @@ def generateCudaCode(weights_file_path):
                     '#include <curand.h>\n'+
                     '#include <random>\n'+
                     '#include <cmath>\n'+
-                    '\nusing namespace std;\n')
+                    '\nusing namespace std;\n'+
+                    '#define cudaCheckError() { \ \n'+
+                    '   cudaError_t e=cudaGetLastError(); \ \n'+
+                    '   if(e!=cudaSuccess) { \ \n'+
+                    '   printf("Cuda failure %s:%d: %s\n",__FILE__,__LINE__,cudaGetErrorString(e));\ \n'+
+                    '   exit(0); \ \n'+ 
+                    '   } \ \n '+
+                    '}\n')
 
     # estado é um vetor de inteiros
     # cada bit representa um vértice
@@ -66,7 +73,7 @@ def generateCudaCode(weights_file_path):
     
     # inicializando estados
     for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'] = statef[tid*SIMULATIONS + '+ str(i) +'];\n'+
+        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'] = statef[tid*'+ str(stateSize) +' + '+ str(i) +'];\n'+
                         '       aux['+str(i)+'] = 0;\n')
 
     code_file.write('       do {\n')
