@@ -309,7 +309,7 @@ def generateCudaCode(weights_file_path):
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Initiating values...";\n'+
-                    '   init_rand_h(statef_d, SIMULATIONS, grid, block);\n'+
+                    '   init_rand_h(statef_d, SIMULATIONS);\n'+
                     '   cudaMemcpy(statef_h, statef_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Running Simulation...";\n'+
