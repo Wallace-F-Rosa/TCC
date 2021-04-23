@@ -306,6 +306,7 @@ def generateCudaCode(weights_file_path):
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Running Simulation...";\n'+
                     '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
+                    '   cudaCheckError();\n'+
                     '   //network_simulation_h(statef_h, SIMULATIONS);\n'
                     '   cudaDeviceSynchronize();\n'+
                     '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
