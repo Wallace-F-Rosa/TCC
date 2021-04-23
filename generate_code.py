@@ -272,7 +272,7 @@ def generateCudaCode(weights_file_path):
                     '   std::uniform_int_distribution<unsigned long long> dist(0, (unsigned long long)std::llround(std::pow(2,64)));\n'+
                     '   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n'+
                     '       for (size_t j = 0; j < '+ str(stateSize) +'; j++)\n'+
-                    '           state[i*'+ str(stateSize) +' + j];\n'+
+                    '           state[i*'+ str(stateSize) +' + j] = dist(e2);\n'+
                     '   }\n'+
                     '}\n')
 
