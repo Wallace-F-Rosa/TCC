@@ -169,7 +169,7 @@ def generateCudaCode(weights_file_path):
     code_file.write("string to_string(state s){\n"+
                     "   string result;\n"+
                     "   stringstream stream;\n"+
-                    "   stream << s[0];"
+                    "   stream << s[0];\n"
                     "   for(int i = 1; i < "+str(stateSize-1)+"; i++)\n"+
                     "       stream << '|' << s[i];\n"+
                     "   stream >> result;\n"+
@@ -266,7 +266,7 @@ def generateCudaCode(weights_file_path):
                     '   }\n'+
                     '}\n')
 
-    code_file.write('void init_rand(state * state_d, unsigned long long SIMULATIONS, dim3 grid, dim3 block) {\n'+
+    code_file.write('void init_rand_d(state * state_d, unsigned long long SIMULATIONS, dim3 grid, dim3 block) {\n'+
                     '   curandGenerator_t gen;\n'+
                     '   unsigned long long * v_d;\n'+
                     '   cudaMalloc((unsigned long long **)&v_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +');\n'+
@@ -276,6 +276,16 @@ def generateCudaCode(weights_file_path):
                     '   cudaDeviceSynchronize();\n'+
                     '   cudaFree(v_d);\n'+
                     '   curandDestroyGenerator(gen);\n'+
+                    '}\n')
+
+    # números aleatórios cpu
+    code_file.wirte('void init_rand_h(state * state, unsigned long long SIMULATIONS) {\n'+
+                    '   std::random_device rd;\n'+
+                    '   std::mt19937_64 e2(rd());\n'+
+                    '   std::uniform_int_distribution<unsigned long long> dist(0, (unsigned long long)std::llround(std::pow(2,64)));\n'+
+                    '   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n'+
+                    '       state[i][0] = dist(e2);\n'+
+                    '   }\n'+
                     '}\n')
 
     # código main, aloca vetores e preencher estados iniciais com números randômicos
@@ -297,14 +307,8 @@ def generateCudaCode(weights_file_path):
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Initiating values...";\n'+
-                    '   init_rand(statef_d, SIMULATIONS, grid, block);\n'+
+                    '   init_rand_h(statef_d, SIMULATIONS, grid, block);\n'+
                     '   cudaMemcpy(statef_h, statef_d, sizeof(state)*SIMULATIONS, cudaMemcpyDeviceToHost);\n'+
-                    '   for (unsigned long long i = 0; i < SIMULATIONS; i++) \n{'+
-                    '       for (size_t j = 0; j < '+ str(stateSize) +'; j++)\n'+
-                    '           cout << statef_h[i][j] << " ";\n'+
-                    '       cout << '+ repr('\n') +';\n'+
-                    '   }\n'+
-                    '   return 0;'
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Running Simulation...";\n'+
                     '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
