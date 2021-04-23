@@ -279,7 +279,7 @@ def generateCudaCode(weights_file_path):
                     '}\n')
 
     # números aleatórios cpu
-    code_file.wirte('void init_rand_h(state * state, unsigned long long SIMULATIONS) {\n'+
+    code_file.write('void init_rand_h(state * state, unsigned long long SIMULATIONS) {\n'+
                     '   std::random_device rd;\n'+
                     '   std::mt19937_64 e2(rd());\n'+
                     '   std::uniform_int_distribution<unsigned long long> dist(0, (unsigned long long)std::llround(std::pow(2,64)));\n'+
