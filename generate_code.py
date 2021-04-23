@@ -31,6 +31,8 @@ def generateCudaCode(weights_file_path):
                     '#include <stdlib.h>\n'+
                     '#include <algorithm>\n'+
                     '#include <curand.h>\n'+
+                    '#include <random>\n'+
+                    '#include <cmath>\n'+
                     '\nusing namespace std;\n')
 
     # estado é um vetor de inteiros
