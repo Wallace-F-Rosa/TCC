@@ -274,6 +274,8 @@ def generateCudaCode(weights_file_path):
                     '   curandGenerateLongLong(gen, v_d, '+ str(stateSize) +'*SIMULATIONS);\n'+
                     '   cpRand<<<grid, block>>>(state_d, v_d, SIMULATIONS);\n'+
                     '   cudaDeviceSynchronize();\n'+
+                    '   cudaFree(v_d);\n'+
+                    '   curandDestroyGenerator(gen);\n'+
                     '}\n')
 
     # código main, aloca vetores e preencher estados iniciais com números randômicos
@@ -297,7 +299,7 @@ def generateCudaCode(weights_file_path):
                     '   cout << "Initiating values...";\n'+
                     '   init_rand(statef_h, SIMULATIONS, grid, block);\n'+
                     '   cudaMemcpy(statef_d, statef_h, sizeof(state)*SIMULATIONS, cudaMemcpyHostToDevice);\n'+
-                    '   cout << "[OK]";\n'+
+                    '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Running Simulation...";\n'+
                     '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
                     '   network_simulation_h(statef_h, SIMULATIONS);\n'
