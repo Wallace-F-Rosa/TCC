@@ -229,10 +229,11 @@ def generateCudaCode(weights_file_path):
                     '   vector<string> atractors;\n'
                     '   unordered_map<string, string> state_to_at;\n'+
                     '   unordered_map<string, unsigned long> at_freq;\n'+
-                    '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
+                    '   for(unsigned long long i = 0; i < SIMULATIONS; i++) {\n'+
                     '       unsigned long long st['+ str(stateSize) +'];\n'+
-                    '       for (unsigned size_t j = 0; j < '+ str(stateSize) +'; j++)\n'+
-                    '           st[j] = state_f[i*SIMULATIONS + j];\n'+
+                    '       for (size_t j = 0; j < '+ str(stateSize) +'; j++) {\n'+
+                    '           st[j] = state_f[i*'+ str(stateSize) +' + j];\n'+
+                    '       }\n'+
                     '       string sst = to_string(st);\n'+
                     '       if (state_to_at.count(sst) > 0) {\n'+
                     '           at_freq[state_to_at[sst]]++;\n'+
