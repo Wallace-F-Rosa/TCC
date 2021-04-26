@@ -34,13 +34,7 @@ def generateCudaCode(weights_file_path):
                     '#include <random>\n'+
                     '#include <cmath>\n'+
                     '\nusing namespace std;\n'+
-                    '#define cudaCheckError() { \ \n'+
-                    '   cudaError_t e=cudaGetLastError(); \ \n'+
-                    '   if(e!=cudaSuccess) { \ \n'+
-                    '   printf("Cuda failure %s:%d: %s\n",__FILE__,__LINE__,cudaGetErrorString(e));\ \n'+
-                    '   exit(0); \ \n'+ 
-                    '   } \ \n '+
-                    '}\n')
+                    '#define cudaCheckError() { cudaError_t e=cudaGetLastError(); if(e!=cudaSuccess) { printf("Cuda failure %s:%d: %s",__FILE__,__LINE__,cudaGetErrorString(e)); exit(0); } }\n')
 
     # estado é um vetor de inteiros
     # cada bit representa um vértice
