@@ -307,7 +307,7 @@ def generateCudaCode(weights_file_path):
                     '   cudaDeviceSynchronize();\n'+
                     '   auto end = high_resolution_clock::now();\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
-                    '   cout << "Running Time GPU (ms) : " << dt.count() << '+repr('\n')+'";\n'+
+                    '   cout << "Running Time GPU (ms) : " << dt.count() << '+repr('\n')+';\n'+
                     '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
                     '   cout << "Getting atractors found...";\n'+
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
