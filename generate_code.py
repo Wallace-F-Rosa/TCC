@@ -34,6 +34,7 @@ def generateCudaCode(weights_file_path):
                     '#include <random>\n'+
                     '#include <cmath>\n'+
                     '\nusing namespace std;\n'+
+                    '\nusing namespace std::chrono;\n'+
                     '#define cudaCheckError() { cudaError_t e=cudaGetLastError(); if(e!=cudaSuccess) { printf("Cuda failure %s:%d: %s",__FILE__,__LINE__,cudaGetErrorString(e)); exit(0); } }\n')
 
     # estado é um vetor de inteiros
@@ -293,21 +294,28 @@ def generateCudaCode(weights_file_path):
                     '   int threads = 1024;\n'+
                     '   dim3 block(threads);\n'+
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
-                    '   cout << "[OK]" << '+repr("\n")+';\n'+
+                    '   cout << "[OK]" << '+ repr("\n") +';\n'+
                     '   cout << "Initiating values...";\n'+
                     '   init_rand_h(statef_h, SIMULATIONS);\n'+
                     '   cudaMemcpy(statef_d, statef_h, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyHostToDevice);\n'+
-                    '   cout << "[OK]" << '+repr("\n")+';\n'+
+                    '   cout << "[OK]" << '+ repr("\n") +';\n'+
                     '   cout << "Running Simulation...";\n'+
+                    '   auto start_gpu = high_resolution_clock::now();\n'+
                     '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
                     '   cudaCheckError();\n'+
-                    '   //network_simulation_h(statef_h, SIMULATIONS);\n'
                     '   cudaDeviceSynchronize();\n'+
-                    '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
-                    '   cout << "[OK]" << '+repr("\n")+';\n'+
+                    '   auto start_cpu = high_resolution_clock::now();\n'+
+                    '   network_simulation_h(statef_h, SIMULATIONS);\n' +
+                    #'   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
+                    '   auto end = high_resolution_clock::now();\n'+
+                    '   cout << "[OK]" << '+ repr("\n") +';\n'+
+                    '   auto duration = duration<double, milli> (end - start_gpu);\n'+
+                    '   cout << "Simulation time (GPU) : " << duration.count() <<'+ repr("\n") +';'
+                    '   duration = duration<double, milli> (end - start_cpu);\n'+
+                    '   cout << "Simulation time (CPU) : " << duration.count() <<'+ repr("\n") +';'
                     '   cout << "Getting atractors found...";\n'+
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
-                    '   cout << "[OK]" << '+repr("\n")+';\n'+
+                    '   cout << "[OK]" << '+ repr("\n") +';\n'+
                     '   output_atractors(atratores);\n'
                     '   return 0;\n'+
                     '}\n')
