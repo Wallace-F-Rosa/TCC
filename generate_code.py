@@ -206,7 +206,7 @@ def generateCudaCode(weights_file_path):
         eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
-            eq += '( ( s1['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
+            eq += '( ( s1['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
         eq += ' ) >= '+str(line[len(line)-1])+'ULL ) << '+str(i%64)+';\n'
