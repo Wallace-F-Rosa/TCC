@@ -296,8 +296,8 @@ def generateCudaCode(weights_file_path):
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Initiating values...";\n'+
-                    '   init_rand_h(statef_h, SIMULATIONS);\n'+
-                    '   cudaMemcpy(statef_d, statef_h, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyHostToDevice);\n'+
+                    '   init_rand_d(statef_d, SIMULATIONS);\n'+
+                    '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Running Simulation...";\n'+
                     '   auto start_gpu = high_resolution_clock::now();\n'+
