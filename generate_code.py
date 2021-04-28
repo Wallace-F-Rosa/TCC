@@ -127,7 +127,7 @@ def generateCudaCode(weights_file_path):
                     '   unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'], aux['+ str(stateSize) +'];\n')
     # inicializando estados
     for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'] = statef[i*'+ st(stateSize) +' + '+str(i)+'];\n'+
+        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'] = statef[i*'+ str(stateSize) +' + '+str(i)+'];\n'+
                         '       aux['+str(i)+'] = 0;\n')
     code_file.write('       do {\n')
     for i in range(networkSize) :
