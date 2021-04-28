@@ -83,7 +83,7 @@ def generateCudaCode(weights_file_path):
         eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
-            eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
+            eq += '( ( state0['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
         eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
@@ -99,7 +99,7 @@ def generateCudaCode(weights_file_path):
         eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
-            eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
+            eq += '( ( state0['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
         eq += ' ) >= '+str(line[len(line)-1])+'ULL ) << '+str(i%64)+';\n'
@@ -134,7 +134,7 @@ def generateCudaCode(weights_file_path):
         eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
-            eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
+            eq += '( ( state0['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
         eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
@@ -150,7 +150,7 @@ def generateCudaCode(weights_file_path):
         eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
-            eq += '( ( state0['+str(i//64)+'] >> '+str(line[2*y])+') % 2 ) * '+str(line[2*y+1])
+            eq += '( ( state0['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
         eq += ' ) >= '+str(line[len(line)-1])+'UL ) << '+str(i%64)+';\n'
@@ -318,6 +318,9 @@ def generateCudaCode(weights_file_path):
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   output_atractors(atratores);\n'
+                    '   delete [] statef_h;\n'+
+                    '   cudaFree(statef_d);\n'+
+                    '   cudaDeviceReset();\n'+
                     '   return 0;\n'+
                     '}\n')
 
