@@ -89,9 +89,9 @@ def generateCudaCode(weights_file_path):
         eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
         code_file.write(eq)
 
-    # estado0 recebe estado1, andamos 1 passo com as equações da rede
+    # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
     for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'];\n'+
+        code_file.write('       state1['+str(i)+'] = state0['+str(i)+'] = aux['+str(i)+'];\n'+
                         '       aux['+str(i)+'] = 0;\n')
 
     # aplicamos as equações novamente em estado1 para andar 2 passos
