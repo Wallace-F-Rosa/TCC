@@ -97,8 +97,7 @@ def generateCudaCode(weights_file_path):
     
     # estado1 recebe aux, andamos 2 passos com as equações da rede
     for i in range(stateSize):
-        code_file.write('           state1['+str(i)+'] = aux['+str(i)+'];\n'+
-                        '           aux['+str(i)+'] = 0;\n')
+        code_file.write('           state1['+str(i)+'] = aux['+str(i)+'];\n')
 
     code_file.write('       } while(!equals_d(state0, state1));\n')
 
