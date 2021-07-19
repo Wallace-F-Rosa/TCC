@@ -72,11 +72,6 @@ def generateCudaCode(weights_file_path):
 
     code_file.write('       do {\n')
 
-    # estado0 
-    for i in range(stateSize):
-        code_file.write('       state1['+str(i)+'] = state0['+str(i)+'];\n'+
-                        '       aux['+str(i)+'] = 0;\n')
-
     # GPU
     # equações : 
     # estadof[var//64] = 0
@@ -84,9 +79,9 @@ def generateCudaCode(weights_file_path):
     # gerando equações do passo 1 (estado0 anda um passo)
     # FIXME: kernel não roda quando temos muitas instruções de equação
 
-    # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
+    # estado0 
     for i in range(stateSize):
-        code_file.write('       state1['+str(i)+'] = state0['+str(i)+'] = aux['+str(i)+'];\n'+
+        code_file.write('       state1['+str(i)+'] = state0['+str(i)+'];\n'+
                         '       aux['+str(i)+'] = 0;\n')
 
     # aplicamos as equações novamente em estado1 para andar 2 passos
