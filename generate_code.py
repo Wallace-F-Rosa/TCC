@@ -289,7 +289,7 @@ def generateCudaCode(weights_file_path):
                     '   unsigned long long * statef_h, * statef_d;\n'+
                     '   statef_h = new unsigned long long[SIMULATIONS*'+ str(stateSize) +'];\n'+
                     '   cudaMalloc((unsigned long long **)&statef_d,sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +');\n'+
-                    '   int threads = 1024;\n'+
+                    '   int threads = 512;\n'+
                     '   dim3 block(threads);\n'+
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
