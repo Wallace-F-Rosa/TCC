@@ -69,7 +69,7 @@ def generateCudaCode(weights_file_path):
 
     # aplicar equações
     for i in range(networkSize) :
-        eq = '  aux['+str(i//64)+'] |= (unsigned long long) ( ( '
+        eq = '    aux['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
             eq += '( ( s['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
@@ -91,13 +91,9 @@ def generateCudaCode(weights_file_path):
     
     # inicializando estados
     for i in range(stateSize):
-        code_file.write('       state1['+str(i)+'] = statef[tid*'+ str(stateSize) +' + '+ str(i) +'];\n')
+        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'] = statef[tid*'+ str(stateSize) +' + '+ str(i) +'];\n')
 
     code_file.write('       do {\n')
-
-    # estado0 
-    for i in range(stateSize):
-        code_file.write('           state0['+str(i)+'] = state1['+str(i)+'];\n')
 
     # GPU
     # equações : 
@@ -105,13 +101,11 @@ def generateCudaCode(weights_file_path):
     # estadof[var//64] |= ( ( ( (estado0[i//64] >> var) % 2 )*peso + ( (estado0[i//64] >> var) % 2 )*peso  ...) >= lim) << var;
     # gerando equações do passo 1 (estado0 anda um passo)
     # FIXME: kernel não roda quando temos muitas instruções de equação
-    #aplicando equações em estado0
+    # andamos 1 passo com estado 0
     code_file.write('           next_d(state0);\n')
-    # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
-    for i in range(stateSize):
-        code_file.write('           state1['+str(i)+'] = state0['+str(i)+'];\n')
 
-    #aplicando equações em s1, andamos 2 passos
+    # andamos 2 passos com estado 1
+    code_file.write('           next_d(state1);\n')
     code_file.write('           next_d(state1);\n')
 
     code_file.write('       } while(!equals_d(state0, state1));\n')
