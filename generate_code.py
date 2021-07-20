@@ -60,10 +60,33 @@ def generateCudaCode(weights_file_path):
                     '   return true;\n'+
                     '}\n')
 
+    #TODO: função que aplica equações da rede em um estado 
+    code_file.write('__device__ void next_d(unsigned long long * s) {\n'+
+                    '   unsigned long long aux['+str(stateSize)+'];\n')
+    # inicializando aux
+    for i in range(stateSize):
+        code_file.write('   aux['+str(i)+'] = 0;\n')
+
+    # aplicar equações
+    for i in range(networkSize) :
+        eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
+        line = fileContent[2+i].split('\n')[0].split(' ')
+        for y in range(weightsSize[i]):
+            eq += '( ( s['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
+            if y != weightsSize[i] - 1:
+                eq+=' + '
+        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
+        code_file.write(eq)
+
+    # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
+    for i in range(stateSize):
+        code_file.write('       s['+str(i)+'] = aux['+str(i)+'];\n')
+    code_file.write('}\n')
+
     # cuda kernel recebe os estados aleatórios inicialmente, simulando N estados até o número de simulações fornecido
     code_file.write('__global__ void network_simulation_d(unsigned long long * statef, unsigned long long SIMULATIONS) {\n'+
                     '   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n'+
-                    '   unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'], aux['+ str(stateSize) +'];\n'+
+                    '   unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'];\n'+
                     '   if (tid < SIMULATIONS) {\n')
     
     # inicializando estados
@@ -74,8 +97,7 @@ def generateCudaCode(weights_file_path):
 
     # estado0 
     for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'];\n'+
-                        '       aux['+str(i)+'] = 0;\n')
+        code_file.write('           state0['+str(i)+'] = state1['+str(i)+'];\n')
 
     # GPU
     # equações : 
@@ -83,35 +105,14 @@ def generateCudaCode(weights_file_path):
     # estadof[var//64] |= ( ( ( (estado0[i//64] >> var) % 2 )*peso + ( (estado0[i//64] >> var) % 2 )*peso  ...) >= lim) << var;
     # gerando equações do passo 1 (estado0 anda um passo)
     # FIXME: kernel não roda quando temos muitas instruções de equação
-    for i in range(networkSize) :
-        eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
-        line = fileContent[2+i].split('\n')[0].split(' ')
-        for y in range(weightsSize[i]):
-            eq += '( ( state0['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
-            if y != weightsSize[i] - 1:
-                eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
-        code_file.write(eq)
-
+    #aplicando equações em estado0
+    code_file.write('           next_d(state0);')
     # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
     for i in range(stateSize):
-        code_file.write('       state1['+str(i)+'] = state0['+str(i)+'] = aux['+str(i)+'];\n'+
-                        '       aux['+str(i)+'] = 0;\n')
+        code_file.write('           state1['+str(i)+'] = state0['+str(i)+'];\n')
 
-    # aplicamos as equações novamente em estado1 para andar 2 passos
-    for i in range(networkSize) :
-        eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
-        line = fileContent[2+i].split('\n')[0].split(' ')
-        for y in range(weightsSize[i]):
-            eq += '( ( state0['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
-            if y != weightsSize[i] - 1:
-                eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+'ULL ) << '+str(i%64)+';\n'
-        code_file.write(eq)
-    
-    # estado1 recebe aux, andamos 2 passos com as equações da rede
-    for i in range(stateSize):
-        code_file.write('           state1['+str(i)+'] = aux['+str(i)+'];\n')
+    #aplicando equações em s1, andamos 2 passos
+    code_file.write('           next_d(state1);')
 
     code_file.write('       } while(!equals_d(state0, state1));\n')
 
