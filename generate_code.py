@@ -72,16 +72,30 @@ def generateCudaCode(weights_file_path):
 
     code_file.write('       do {\n')
 
+    # estado0 
+    for i in range(stateSize):
+        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'];\n'+
+                        '       aux['+str(i)+'] = 0;\n')
+
     # GPU
     # equações : 
     # estadof[var//64] = 0
     # estadof[var//64] |= ( ( ( (estado0[i//64] >> var) % 2 )*peso + ( (estado0[i//64] >> var) % 2 )*peso  ...) >= lim) << var;
     # gerando equações do passo 1 (estado0 anda um passo)
     # FIXME: kernel não roda quando temos muitas instruções de equação
+    for i in range(networkSize) :
+        eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
+        line = fileContent[2+i].split('\n')[0].split(' ')
+        for y in range(weightsSize[i]):
+            eq += '( ( state0['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
+            if y != weightsSize[i] - 1:
+                eq+=' + '
+        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
+        code_file.write(eq)
 
-    # estado0 
+    # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
     for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'];\n'+
+        code_file.write('       state1['+str(i)+'] = state0['+str(i)+'] = aux['+str(i)+'];\n'+
                         '       aux['+str(i)+'] = 0;\n')
 
     # aplicamos as equações novamente em estado1 para andar 2 passos
@@ -89,7 +103,7 @@ def generateCudaCode(weights_file_path):
         eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
         line = fileContent[2+i].split('\n')[0].split(' ')
         for y in range(weightsSize[i]):
-            eq += '( ( state1['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
+            eq += '( ( state0['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
             if y != weightsSize[i] - 1:
                 eq+=' + '
         eq += ' ) >= '+str(line[len(line)-1])+'ULL ) << '+str(i%64)+';\n'
