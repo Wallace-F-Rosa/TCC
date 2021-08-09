@@ -304,7 +304,7 @@ def generateCudaCode(weights_file_path):
                     '           device = DEVICE;\n'+
                     '       #endif\n'+
                     '       cudaSetDevice(device);\n'+
-                    '       cudaGetDeviceProperties(prop, device);\n'+
+                    '       cudaGetDeviceProperties(&prop, device);\n'+
                     '       int threads = prop.maxThreadsPerBlock;\n'+
                     '   #endif\n'+
                     '   dim3 block(threads);\n'+
