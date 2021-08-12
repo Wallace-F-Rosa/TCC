@@ -297,17 +297,17 @@ def generateCudaCode(weights_file_path):
                     '   cudaMalloc((unsigned long long **)&statef_d,sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +');\n'+
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cudaDeviceProp prop;\n'+
+                    '   int device = 0;\n'+
                     '   #ifdef THREADS\n'+
                     '      int threads = THREADS;\n'+
                     '   #else\n'+
-                    '       int device = 0;\n'+
                     '       #ifdef DEVICE\n'+
                     '           device = DEVICE;\n'+
                     '       #endif\n'+
                     '       cudaSetDevice(device);\n'+
-                    '       cudaGetDeviceProperties(&prop, device);\n'+
                     '       int threads = prop.maxThreadsPerBlock;\n'+
                     '   #endif\n'+
+                    '   cudaGetDeviceProperties(&prop, device);\n'+
                     '   cout << "GPU : " << prop.name << '+repr("\n")+';\n'+
                     '   dim3 block(threads);\n'+
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
