@@ -295,6 +295,7 @@ def generateCudaCode(weights_file_path):
                     '   unsigned long long * statef_h, * statef_d;\n'+
                     '   statef_h = new unsigned long long[SIMULATIONS*'+ str(stateSize) +'];\n'+
                     '   cudaMalloc((unsigned long long **)&statef_d,sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +');\n'+
+                    '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   #ifdef THREADS\n'+
                     '      int threads = THREADS;\n'+
                     '   #else\n'+
@@ -310,7 +311,6 @@ def generateCudaCode(weights_file_path):
                     '   #endif\n'+
                     '   dim3 block(threads);\n'+
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
-                    '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   cout << "Number of threads : " << threads << '+repr("\n")+';\n'+
                     '   cout << "Initiating values...";\n'+
                     '   init_rand_d(statef_d, SIMULATIONS);\n'+
