@@ -10,7 +10,8 @@ def generateCudaCode(weights_file_path):
     weightsFile.close()
 
     # definindo valores
-    networkSize = int(fileContent[0].split('\n')[0])
+    networkNodes = fileContent[0].split('\n')[0].split(' ')
+    networkSize = len(networkNodes)
     weightsSize = [ int(x) for x in fileContent[1].split('\n')[0].split(' ')]
     print(weightsSize)
     # gerando código da rede
@@ -256,9 +257,19 @@ def generateCudaCode(weights_file_path):
 
     # função que imprime atratores encontrados num arquivo
     code_file.write('void output_atractors(const vector<string> &atractors) {\n'+
-                    '   for (unsigned long long i = 0; i < atractors.size(); i++) {\n'+
-                    "       cout << atractors[i] <<"+ repr('\n') +";\n"+
-                    '   }\n'+
+                    '   ofstream atractorsFile;\n'+
+                    '   atractorsFile.open("atractors.json");\n'+
+                    '   atractorsFile << "{'+repr('\n')+'";\n'+
+                    '   atractorsFile << "\\"nodes\\" : [";')
+    for i in range(len(networkNodes)-1):
+        code_file.write('atractorsFile << \"'+str(networkNodes[i])+'",')
+    code_file.write('"'+str(networkNodes[len(networkNodes)-1])+'"],')
+
+    code_file.write('   atractorsFile << "\\"atractors\\" : [";'+
+                    '   for (unsigned long long i = 0; i < atractors.size()-1; i++)\n'+
+                    '       cout << atractors[i] <<",";\n'+
+                    '   cout << atractors[atractors.size()-1] <<"]";\n'+
+                    '   atractorsFile << "}'+repr('\n')+'";\n'+
                     '}\n')
 
     # inicializa estados inicias aleatoriamente na gpu
