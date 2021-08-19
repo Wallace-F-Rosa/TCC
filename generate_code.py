@@ -166,7 +166,7 @@ def generateCudaCode(weights_file_path):
     code_file.write('           next_h(state1);\n')
     code_file.write('           next_h(state1);\n')
 
-    code_file.write('       } while(!equals_d(state0, state1));\n')
+    code_file.write('       } while(!equals_h(state0, state1));\n')
     # salva o estado inicial do atrator na memória global da gpu
     for i in range(stateSize) :
         code_file.write('       statef[i*'+ str(stateSize) +' + '+ str(i) +'] = state1['+str(i)+'];\n')
