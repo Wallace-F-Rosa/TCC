@@ -260,10 +260,10 @@ def generateCudaCode(weights_file_path):
                     '   ofstream atractorsFile;\n'+
                     '   atractorsFile.open("atractors.json");\n'+
                     '   atractorsFile << "{'+repr('\n')+'";\n'+
-                    '   atractorsFile << "\\"nodes\\" : [";')
+                    '   atractorsFile << "\\"nodes\\" : [";\n')
     for i in range(len(networkNodes)-1):
-        code_file.write('atractorsFile << "\\"'+str(networkNodes[i])+'\\",";')
-    code_file.write('"'+str(networkNodes[len(networkNodes)-1])+'"];\n')
+        code_file.write('   atractorsFile << "\\"'+str(networkNodes[i])+'\\",";\n')
+    code_file.write('   atractorsFile << "\\"'+str(networkNodes[len(networkNodes)-1])+'\\"]";\n')
 
     code_file.write('   atractorsFile << "\\"atractors\\" : [";\n'+
                     '   for (unsigned long long i = 0; i < atractors.size()-1; i++)\n'+
