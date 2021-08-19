@@ -270,7 +270,7 @@ def generateCudaCode(weights_file_path):
                     '       atractorsFile << atractors[i] <<",";\n'+
                     '   atractorsFile << atractors[atractors.size()-1] <<"]";\n'+
                     '   atractorsFile << "}\\n";\n'+
-                    '   atractorsFile.close()'+
+                    '   atractorsFile.close();'+
                     '}\n')
 
     # inicializa estados inicias aleatoriamente na gpu
