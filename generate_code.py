@@ -263,11 +263,11 @@ def generateCudaCode(weights_file_path):
                     '   atractorsFile << "\\"nodes\\" : [";')
     for i in range(len(networkNodes)-1):
         code_file.write('atractorsFile << \"'+str(networkNodes[i])+'",')
-    code_file.write('"'+str(networkNodes[len(networkNodes)-1])+'"],')
+    code_file.write('"'+str(networkNodes[len(networkNodes)-1])+'"];\n')
 
-    code_file.write('   atractorsFile << "\\"atractors\\" : [";'+
+    code_file.write('   atractorsFile << "\\"atractors\\" : [";\n'+
                     '   for (unsigned long long i = 0; i < atractors.size()-1; i++)\n'+
-                    '       cout << atractors[i] <<",";\n'+
+                    '       atractorsFile << atractors[i] <<",";\n'+
                     '   cout << atractors[atractors.size()-1] <<"]";\n'+
                     '   atractorsFile << "}'+repr('\n')+'";\n'+
                     '}\n')
