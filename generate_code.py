@@ -268,7 +268,7 @@ def generateCudaCode(weights_file_path):
     code_file.write('   atractorsFile << "\\"atractors\\" : [";\n'+
                     '   for (unsigned long long i = 0; i < atractors.size()-1; i++)\n'+
                     '       atractorsFile << atractors[i] <<",";\n'+
-                    '   atractorsFile << atractors[atractors.size()-1] <<"]";\n'+
+                    '   atractorsFile << atractors[atractors.size()-1] <<"]\\n";\n'+
                     '   atractorsFile << "}\\n";\n'+
                     '   atractorsFile.close();'+
                     '}\n')
