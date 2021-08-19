@@ -259,17 +259,17 @@ def generateCudaCode(weights_file_path):
     code_file.write('void output_atractors(const vector<string> &atractors) {\n'+
                     '   ofstream atractorsFile;\n'+
                     '   atractorsFile.open("atractors.json");\n'+
-                    '   atractorsFile << "{'+repr('\n')+'";\n'+
+                    '   atractorsFile << "{\\n";\n'+
                     '   atractorsFile << "\\"nodes\\" : [";\n')
     for i in range(len(networkNodes)-1):
         code_file.write('   atractorsFile << "\\"'+str(networkNodes[i])+'\\",";\n')
-    code_file.write('   atractorsFile << "\\"'+str(networkNodes[len(networkNodes)-1])+'\\"]";\n')
+    code_file.write('   atractorsFile << "\\"'+str(networkNodes[len(networkNodes)-1])+'\\"],\\n";\n')
 
     code_file.write('   atractorsFile << "\\"atractors\\" : [";\n'+
                     '   for (unsigned long long i = 0; i < atractors.size()-1; i++)\n'+
                     '       atractorsFile << atractors[i] <<",";\n'+
                     '   cout << atractors[atractors.size()-1] <<"]";\n'+
-                    '   atractorsFile << "}'+repr('\n')+'";\n'+
+                    '   atractorsFile << "}\\n";\n'+
                     '}\n')
 
     # inicializa estados inicias aleatoriamente na gpu
