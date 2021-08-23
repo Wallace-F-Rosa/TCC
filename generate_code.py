@@ -13,8 +13,8 @@ def generateCudaCode(weights_file_path):
 
     # definindo valores
     networkNodes = fileContent[0].split('\n')[0].split(' ')
-    networkSize = len(networkNodes)
-    weightsSize = [ int(x) for x in fileContent[1].split('\n')[0].split(' ')]
+    networkSize = int(fileContent[1].split('\n')[0])
+    weightsSize = [ int(x) for x in fileContent[2].split('\n')[0].split(' ')]
     print(weightsSize)
     # gerando código da rede
     code_file = open('tlf.cu', 'w+')
