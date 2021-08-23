@@ -1,4 +1,5 @@
 import os
+import argparse
 import sys
 
 def generateCudaCode(weights_file_path):
@@ -7,6 +8,7 @@ def generateCudaCode(weights_file_path):
     # lendo pesos das redes
     weightsFile = open(weights_file_path, 'r')
     fileContent = weightsFile.readlines()
+
     weightsFile.close()
 
     # definindo valores
@@ -361,12 +363,18 @@ if __name__ == '__main__' :
         Função main recebe arquivo de rede como parâmetro e gera como saída
     um arquivo tlf.cu para simulação da rede em CUDA
     """
+
+    parser = argparse.ArgumentParser(description='Recebe equações TLF '+
+            '(soma de pesos) de uma Rede Reguladora e retorna '+
+            'como saida um arquivo tlf.cu com código CUDA para '+
+            'simulação da rede.'
+    )
+    parser.add_argument('file', type=str, help='Arquivo contendo equações de pesos')
+    args = parser.parse_args()
     # try :
-    weights_file_path = sys.argv[1]
+    weights_file_path = args.file
     print(weights_file_path)
     if not os.path.exists(weights_file_path) :
         print('Arquivo com pesos da rede não foi encontrado!')
     else:
         generateCudaCode(weights_file_path)
-# except Exception as e:
-    #     print(e)
