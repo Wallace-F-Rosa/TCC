@@ -206,22 +206,8 @@ def generateCudaCode(weights_file_path):
                     "       s0[i] = s1[i] = s[i];\n"+
                     "       aux[i] = 0;\n"+
                     "   }\n"+
-                    "   while(true) {\n")
-
-    for i in range(networkSize) :
-        eq = '          aux['+str(i//64)+'] |= (unsigned long long) ( ( '
-        line = fileContent[2+i].split('\n')[0].split(' ')
-        for y in range(weightsSize[i]):
-            eq += '( ( s1['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
-            if y != weightsSize[i] - 1:
-                eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+'ULL ) << '+str(i%64)+';\n'
-        code_file.write(eq)
- 
-    for i in range(stateSize):
-        code_file.write('           s1['+str(i)+'] = aux['+str(i)+'];\n'+
-                        '           aux['+str(i)+'] = 0;\n')
-
+                    "   while(true) {\n"+
+                    "       next_h(s0);\n")
     code_file.write("       if (!equals_h(s0,s1))\n"+
                     "           atractor.push_back(to_string(s1));\n"+
                     "       else\n"+
