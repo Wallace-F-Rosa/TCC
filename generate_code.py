@@ -312,7 +312,8 @@ def generateCudaCode(weights_file_path):
                     '   cout << "GPU : " << prop.name << '+repr("\n")+';\n'+
                     '   dim3 block(threads);\n'+
                     '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
-                    '   cout << "Number of threads : " << threads << '+repr("\n")+';\n'+
+                    '   cout << "Number of threads used: " << threads << "  Max allowed :" << prop.maxThreadsDim[0] << '+repr("\n")+';\n'+
+                    '   cout << "Number of blocks used: " << block.x << "  Max allowed :" << prop.maxGridSize[0] << '+repr("\n")+';\n'+
                     '   cout << "Initiating values...";\n'+
                     '   init_rand_d(statef_d, SIMULATIONS);\n'+
                     '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
