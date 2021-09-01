@@ -136,7 +136,7 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
                     '   unsigned long long aux['+str(stateSize)+'];\n')
 
     # escreve equações
-    write_equations(file, stateSize, networkSize, weightsSize, weightsFileContent)
+    write_equations(code_file, stateSize, networkSize, weightsSize, fileContent)
 
     code_file.write('}\n')
 
