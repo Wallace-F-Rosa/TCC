@@ -148,7 +148,7 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
     
     # inicializando estados
     for i in range(stateSize):
-        code_file.write('       state1['+str(i)+'] = statef[tid*'+ str(stateSize) +' + '+ str(i) +'];\n')
+        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'] = statef[tid*'+ str(stateSize) +' + '+ str(i) +'];\n')
 
 
 
@@ -158,14 +158,8 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
     # estadof[var//64] |= ( ( ( (estado0[i//64] >> var) % 2 )*peso + ( (estado0[i//64] >> var) % 2 )*peso  ...) >= lim) << var;
     code_file.write('       do {\n')
 
-    # inicializando estados
-    for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = state1['+ str(i) +'];\n')
     code_file.write('           next_d(state0);\n')
 
-    # inicializando estados
-    for i in range(stateSize):
-        code_file.write('       state1['+str(i)+'] = state0['+ str(i) +'];\n')
     # andamos 2 passos com estado 1
     code_file.write('           next_d(state1);\n')
     code_file.write('           next_d(state1);\n')
