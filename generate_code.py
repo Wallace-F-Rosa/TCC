@@ -2,24 +2,44 @@ import os
 import argparse
 import sys
 
-def generateCudaCode(weights_file_path):
-    """ Gera código cuda para simulação da rede utilizando equações com peso """
+def write_equations(code_file, state_size, network_size, weights_size, weights_file_content):
+    """Escreve no arquivo de saída tlf.cu os comandos para executar as equações diretamente no código.
+        
+    Args:
+        code_file (file): objeto representando arquivo de saída aberto para escrita.
+        state_size (int): tamanho do estado da rede em representação de números de 64 bits.
+        network_size (int): número de nós da rede.
+        weights_size (list): lista com a quantidade de pesos para equação da rede.
+        weights_file_content (file): objeto representando arquivo com pesos das equações aberto para leitura.
+    """
 
-    # lendo pesos das redes
-    weightsFile = open(weights_file_path, 'r')
-    fileContent = weightsFile.readlines()
+    code_file.write('   unsigned long long aux['+str(state_size)+'];\n')
+    # inicializando aux
+    for i in range(state_size):
+        code_file.write('   aux['+str(i)+'] = 0;\n')
 
-    weightsFile.close()
+    # aplicar equações
+    for i in range(network_size) :
+        eq = '    aux['+str(i//64)+'] |= (unsigned long long) ( ( '
+        line = weights_file_content[2+i].split('\n')[0].split(' ')
+        for y in range(weights_size[i]):
+            eq += '( ( s['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
+            if y != weights_size[i] - 1:
+                eq+=' + '
+        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
+        code_file.write(eq)
 
-    # definindo valores
-    networkNodes = fileContent[0].split('\n')[0].split(' ')
-    networkSize = len(networkNodes)
-    weightsSize = [ int(x) for x in fileContent[1].split('\n')[0].split(' ')]
-    print(weightsSize)
-    # gerando código da rede
-    code_file = open('tlf.cu', 'w+')
-    
-    # headers do código
+    # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
+    for i in range(state_size):
+        code_file.write('   s['+str(i)+'] = aux['+str(i)+'];\n')
+
+def write_headers(code_file):
+    """Escreve no arquivo de saída tlf.cu os headers c++ e CUDA necessários para rodar o programa.
+
+    Args:
+        code_file (file): objeto representando arquivo de saída aberto para escrita.
+    """
+
     code_file.write('#include <iostream>\n'+
                     '#include <chrono>\n'+
                     '#include <ctime>\n'+
@@ -39,6 +59,31 @@ def generateCudaCode(weights_file_path):
                     '\nusing namespace std;\n'+
                     'using namespace std::chrono;\n\n'+
                     '#define cudaCheckError() { cudaError_t e=cudaGetLastError(); if(e!=cudaSuccess) { printf("Cuda failure %s:%d: %s",__FILE__,__LINE__,cudaGetErrorString(e)); exit(0); } }\n')
+
+
+def generateCudaCode(weights_file_path, explicit_equations=False):
+    """Gera código cuda para simulação da rede utilizando equações com peso em arquivo de saída tlf.cu.
+        
+    Args:
+        weights_file_path (string) : caminho até o arquivo com pesos da rede.
+    """
+
+    # lendo pesos das redes
+    weightsFile = open(weights_file_path, 'r')
+    fileContent = weightsFile.readlines()
+
+    weightsFile.close()
+
+    # definindo valores
+    networkNodes = fileContent[0].split('\n')[0].split(' ')
+    networkSize = len(networkNodes)
+    weightsSize = [ int(x) for x in fileContent[1].split('\n')[0].split(' ')]
+    print(weightsSize)
+    # gerando código da rede
+    code_file = open('tlf.cu', 'w+')
+    
+    # headers do código
+    write_headers(code_file)
 
     # estado é um vetor de inteiros
     # cada bit representa um vértice
@@ -89,24 +134,10 @@ def generateCudaCode(weights_file_path):
     # função device que aplica equações da rede em um estado 
     code_file.write('__device__ void next_d(unsigned long long * s) {\n'+
                     '   unsigned long long aux['+str(stateSize)+'];\n')
-    # inicializando aux
-    for i in range(stateSize):
-        code_file.write('   aux['+str(i)+'] = 0;\n')
 
-    # aplicar equações
-    for i in range(networkSize) :
-        eq = '    aux['+str(i//64)+'] |= (unsigned long long) ( ( '
-        line = fileContent[2+i].split('\n')[0].split(' ')
-        for y in range(weightsSize[i]):
-            eq += '( ( s['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
-            if y != weightsSize[i] - 1:
-                eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
-        code_file.write(eq)
+    # escreve equações
+    write_equations(file, stateSize, networkSize, weightsSize, weightsFileContent)
 
-    # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
-    for i in range(stateSize):
-        code_file.write('   s['+str(i)+'] = aux['+str(i)+'];\n')
     code_file.write('}\n')
 
     # cuda kernel recebe os estados aleatórios inicialmente, simulando N estados até o número de simulações fornecido
@@ -284,7 +315,7 @@ def generateCudaCode(weights_file_path):
     # código main, aloca vetores e preencher estados iniciais com números randômicos
     # chama kernel gpu e função cpu para calcular os atratores
     # TODO: medir tempo de execução em cpu e gpu e gerar gráficos de comparacao
-    # TODO: comparar saida dos atratores para ver qual a diferença entre booleano e tlf
+    # TODO: comparar saída dos atratores para ver qual a diferença entre booleano e tlf
     code_file.write('int main(int argc, char **argv) {\n'+
                     '   unsigned long long SIMULATIONS = 0;\n'+    
                     '   std::string argv2 = argv[1];\n'+
@@ -346,17 +377,21 @@ def generateCudaCode(weights_file_path):
     code_file.close()
 
 if __name__ == '__main__' :
-    """
-        Função main recebe arquivo de rede como parâmetro e gera como saída
+    """Função main recebe arquivo de rede como parâmetro e gera como saída
     um arquivo tlf.cu para simulação da rede em CUDA
+
+    Args:
+        file (string) : caminho até arquivo com pesos da rede.
+        --explicit-equations : faz com que as equações sejam diretamente inseridas no código sem a utilização de memória. 
     """
 
     parser = argparse.ArgumentParser(description='Recebe equações TLF '+
             '(soma de pesos) de uma Rede Reguladora e retorna '+
-            'como saida um arquivo tlf.cu com código CUDA para '+
+            'como saída um arquivo tlf.cu com código CUDA para '+
             'simulação da rede.'
     )
     parser.add_argument('file', type=str, help='Arquivo contendo equações de pesos')
+    parser.add_argument('--explicit-equations', '-e', action='store_true', help='Equações são inseridas diretamente no código sem usar memória')
     args = parser.parse_args()
     # try :
     weights_file_path = args.file
