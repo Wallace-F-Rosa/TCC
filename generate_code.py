@@ -132,8 +132,7 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
     code_file.write('}\n')
 
     # função device que aplica equações da rede em um estado 
-    code_file.write('__device__ void next_d(unsigned long long * s) {\n'+
-                    '   unsigned long long aux['+str(stateSize)+'];\n')
+    code_file.write('__device__ void next_d(unsigned long long * s) {\n')
 
     # escreve equações
     write_equations(code_file, stateSize, networkSize, weightsSize, fileContent)
