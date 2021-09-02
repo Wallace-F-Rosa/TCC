@@ -180,14 +180,8 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
                     '   unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'], aux['+ str(stateSize) +'];\n')
     code_file.write('   do {\n')
 
-    # inicializando estados
-    for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = state1['+ str(i) +'];\n')
     code_file.write('           next_h(state0);\n')
 
-    # inicializando estados
-    for i in range(stateSize):
-        code_file.write('       state1['+str(i)+'] = state0['+ str(i) +'];\n')
     # andamos 2 passos com estado 1
     code_file.write('           next_h(state1);\n')
     code_file.write('           next_h(state1);\n')
