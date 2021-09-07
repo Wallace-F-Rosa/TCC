@@ -177,8 +177,13 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
     # versão cpu do calculo de atratores
     code_file.write('void network_simulation_h(unsigned long long * statef, unsigned long long SIMULATIONS){\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
-                    '   unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'], aux['+ str(stateSize) +'];\n')
-    code_file.write('   do {\n')
+                    '       unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'], aux['+ str(stateSize) +'];\n')
+
+    # inicializando estados
+    for i in range(stateSize):
+        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'] = statef[tid*'+ str(stateSize) +' + '+ str(i) +'];\n')
+
+    code_file.write('       do {\n')
 
     code_file.write('           next_h(state0);\n')
 
@@ -365,7 +370,7 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
 
 if __name__ == '__main__' :
     """Função main recebe arquivo de rede como parâmetro e gera como saída
-    um arquivo tlf.cu para simulação da rede em CUDA
+    um arquivo tlf.cu para simulação da rede em CUDA.
 
     Args:
         file (string) : caminho até arquivo com pesos da rede.
