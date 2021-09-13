@@ -180,8 +180,9 @@ def generateCudaCode(weights_file_path, explicit_equations=False, cpu=False):
     # CPU
     # versão cpu do calculo de atratores
     code_file.write('void network_simulation_h(unsigned long long * statef, unsigned long long SIMULATIONS){\n'+
+                    '   unsigned long long i;\n'+
                     '   #pragma omp parallel for private (i)\n'+
-                    '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
+                    '   for(i = 0; i < SIMULATIONS; i++){\n'+
                     '       unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'], aux['+ str(stateSize) +'];\n')
 
     # inicializando estados
