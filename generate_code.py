@@ -62,7 +62,7 @@ def write_headers(code_file):
                     '#define cudaCheckError() { cudaError_t e=cudaGetLastError(); if(e!=cudaSuccess) { printf("Cuda failure %s:%d: %s",__FILE__,__LINE__,cudaGetErrorString(e)); exit(0); } }\n')
 
 
-def generateCudaCode(weights_file_path, explicit_equations=False):
+def generateCudaCode(weights_file_path, explicit_equations=False, cpu=False):
     """Gera código cuda para simulação da rede utilizando equações com peso em arquivo de saída tlf.cu.
         
     Args:
@@ -81,7 +81,10 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
     weightsSize = [ int(x) for x in fileContent[1].split('\n')[0].split(' ')]
     print(weightsSize)
     # gerando código da rede
-    code_file = open('tlf.cu', 'w+')
+    output_file_name = 'tlf.cu'
+    if cpu:
+        output_file_name = 'tlf.cpp'
+    code_file = open(output_file_name, 'w+')
     
     # headers do código
     write_headers(code_file)
@@ -177,7 +180,7 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
     # CPU
     # versão cpu do calculo de atratores
     code_file.write('void network_simulation_h(unsigned long long * statef, unsigned long long SIMULATIONS){\n'+
-                    '   #pragma omp parallel for\n'+
+                    '   #pragma omp parallel for private (i)\n'+
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
                     '       unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'], aux['+ str(stateSize) +'];\n')
 
@@ -386,6 +389,7 @@ if __name__ == '__main__' :
     )
     parser.add_argument('file', type=str, help='Arquivo contendo equações de pesos')
     parser.add_argument('--explicit-equations', '-e', action='store_true', help='Equações são inseridas diretamente no código sem usar memória')
+    parser.add_argument('--cpu', type=str, default='gpu', help='Gera código cpu com openmp')
     args = parser.parse_args()
     # try :
     weights_file_path = args.file
