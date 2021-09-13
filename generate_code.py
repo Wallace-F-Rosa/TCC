@@ -56,6 +56,7 @@ def write_headers(code_file):
                     '#include <curand.h>\n'+
                     '#include <random>\n'+
                     '#include <cmath>\n'+
+                    '#include <omp.h>\n'+
                     '\nusing namespace std;\n'+
                     'using namespace std::chrono;\n\n'+
                     '#define cudaCheckError() { cudaError_t e=cudaGetLastError(); if(e!=cudaSuccess) { printf("Cuda failure %s:%d: %s",__FILE__,__LINE__,cudaGetErrorString(e)); exit(0); } }\n')
@@ -176,6 +177,7 @@ def generateCudaCode(weights_file_path, explicit_equations=False):
     # CPU
     # versão cpu do calculo de atratores
     code_file.write('void network_simulation_h(unsigned long long * statef, unsigned long long SIMULATIONS){\n'+
+                    '   #pragma omp parallel for'
                     '   for(unsigned long long i = 0; i < SIMULATIONS; i++){\n'+
                     '       unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'], aux['+ str(stateSize) +'];\n')
 
