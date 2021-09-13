@@ -45,7 +45,7 @@ echo "IL-6 Signalling"
 ./test.sh "IL-6 Signalling"
 
 echo "EGFR & ErbB Signaling"
-./test.sh "EGFR & ErbB Signaling"
+./test100.sh "EGFR & ErbB Signaling"
 
 echo "signal transduction in fibroblasts"
-./test.sh "signal transduction in fibroblasts"
+./test100.sh "signal transduction in fibroblasts"
