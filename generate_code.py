@@ -31,7 +31,7 @@ def write_random_initator(code_file, state_size, cpu=False):
                         '   }\n'+
                         '}\n')
 
-def write_equations(code_file, state_size, network_nodes, eqs_size, eqs_file_content, cpu=False):
+def write_equations(code_file, state_size, network_nodes, eqs_size, eqs_file_content, boolean_equations=False):
     """Escreve no arquivo de saída os comandos para executar as equações diretamente no código.
         
     Args:
@@ -39,8 +39,8 @@ def write_equations(code_file, state_size, network_nodes, eqs_size, eqs_file_con
         state_size (int): tamanho do estado da rede em representação de números de 64 bits.
         network_nodes (list): lista de nós da rede.
         eqs_size (list): lista com o tamanho de cada equação da rede.
-        eqs_file_content (file): objeto representando arquivo com equações aberto para leitura.
-        cpu (bool): código gerado deve ser C++ puro sem funcionalidades CUDA.
+        eqs_file_content (list): lista com conteúdo de linhas do arquivo de equações.
+        boolean_equations (bool): as equações do código são booleanas.
     """
 
     code_file.write('   unsigned long long aux['+str(state_size)+'];\n')
@@ -49,7 +49,7 @@ def write_equations(code_file, state_size, network_nodes, eqs_size, eqs_file_con
         code_file.write('   aux['+str(i)+'] = 0;\n')
 
     # aplicar equações
-    if not cpu:
+    if not boolean_equations:
         for i in range(len(network_nodes)) :
             eq = '    aux['+str(i//64)+'] |= (unsigned long long) ( ( '
             line = eqs_file_content[2+i].split('\n')[0].split(' ')
@@ -61,7 +61,21 @@ def write_equations(code_file, state_size, network_nodes, eqs_size, eqs_file_con
             code_file.write(eq)
     else:
         #TODO: equações boolenas
-        pass
+        operators = {'and':' && ', 'not':'!', 'or':' || ', '(':'(', ')':')'}
+        nodes_dict = {}
+        for i in range(len(network_nodes)):
+            nodes_dict[network_nodes[i]] = i
+        for i in range(len(eqs_file_content)):
+            eq = '    aux['+str(i//64)+'] |= (unsigned long long) ( '
+            content = eqs_file_content[i].split(' = ')[1].split('\n')[0].split(' ')
+            for c in content:
+                if c != '':
+                    if c in operators:
+                        eq += operators[c] + ' '
+                    else:
+                        eq += '( ( s['+str(int(nodes_dict[c])//64)+'] >> '+str(int(nodes_dict[c])//64)+') % 2 ) '
+            eq += ' ) << '+str(i%64)+';\n'
+            code_file.write(eq)
 
     # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
     for i in range(state_size):
@@ -99,7 +113,7 @@ def write_headers(code_file, cpu=False):
                         '#define cudaCheckError() { cudaError_t e=cudaGetLastError(); if(e!=cudaSuccess) { printf("Cuda failure %s:%d: %s",__FILE__,__LINE__,cudaGetErrorString(e)); exit(0); } }\n')
 
 
-def generateCudaCode(eqs_file_path, explicit_equations=False, cpu=False):
+def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     """Gera código cuda para simulação da rede utilizando equações com peso em arquivo de saída tlf.cu.
         
     Args:
@@ -114,15 +128,15 @@ def generateCudaCode(eqs_file_path, explicit_equations=False, cpu=False):
 
     # definindo valores
     networkNodes = []
-    if not cpu:
+    if not boolean_equations:
         networkNodes = fileContent[0].split('\n')[0].split(' ')
     else:
         for l in fileContent:
             networkNodes.append(l.split(' = ')[0])
-        print(networkNodes)
     networkSize = len(networkNodes)
-    weightsSize = [ int(x) for x in fileContent[1].split('\n')[0].split(' ')]
-    # print(weightsSize)
+    weightsSize = []
+    if not boolean_equations:
+        weightsSize = [ int(x) for x in fileContent[1].split('\n')[0].split(' ')]
     # gerando código da rede
     output_file_name = 'tlf.cu'
     if cpu:
@@ -156,33 +170,17 @@ def generateCudaCode(eqs_file_path, explicit_equations=False, cpu=False):
                     '}\n')
 
     # função host que aplica equações num estado
-    code_file.write('void next_h(unsigned long long * s) {\n'+
-                    '   unsigned long long aux['+str(stateSize)+'];\n')
-    # inicializando aux
-    for i in range(stateSize):
-        code_file.write('   aux['+str(i)+'] = 0;\n')
+    code_file.write('void next_h(unsigned long long * s) {\n')
 
-    # aplicar equações
-    for i in range(networkSize) :
-        eq = '    aux['+str(i//64)+'] |= (unsigned long long) ( ( '
-        line = fileContent[2+i].split('\n')[0].split(' ')
-        for y in range(weightsSize[i]):
-            eq += '( ( s['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
-            if y != weightsSize[i] - 1:
-                eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
-        code_file.write(eq)
+    write_equations(code_file, stateSize, networkNodes, weightsSize, fileContent, boolean_equations)
 
-    # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
-    for i in range(stateSize):
-        code_file.write('   s['+str(i)+'] = aux['+str(i)+'];\n')
     code_file.write('}\n')
 
     # função device que aplica equações da rede em um estado 
     code_file.write('__device__ void next_d(unsigned long long * s) {\n')
 
     # escreve equações
-    write_equations(code_file, stateSize, networkSize, weightsSize, fileContent)
+    write_equations(code_file, stateSize, networkNodes, weightsSize, fileContent, boolean_equations)
 
     code_file.write('}\n')
 
@@ -334,7 +332,7 @@ def generateCudaCode(eqs_file_path, explicit_equations=False, cpu=False):
                     '}\n')
 
     # inicializa estados inicias aleatoriamente na gpu
-    write_random_initator(code_file, stateSize)
+    write_random_initator(code_file, stateSize, cpu)
 
     # código main, aloca vetores e preencher estados iniciais com números randômicos
     # chama kernel gpu e função cpu para calcular os atratores
@@ -414,13 +412,13 @@ if __name__ == '__main__' :
             'como saída um arquivo tlf.cu com código CUDA para '+
             'simulação da rede.'
     )
-    parser.add_argument('--file', '-f', type=str, help='Arquivo contendo equações de pesos ou boolenas')
+    parser.add_argument('file', type=str, help='Arquivo contendo equações de pesos ou boolenas')
     parser.add_argument('--boolean-equations', '-b', action='store_true', help='Equações são inseridas diretamente no código sem usar memória')
-    parser.add_argument('--cpu', type=str, default='gpu', help='Gera código C++ (.cpp) com openmp')
+    parser.add_argument('--cpu', action='store_true', default=False, help='Gera código C++ (.cpp) com openmp')
     args = parser.parse_args()
     # try :
     eqs_file_path = args.file
     if not os.path.exists(eqs_file_path) :
         print('Arquivo com pesos da rede não foi encontrado!')
     else:
-        generateCudaCode(eqs_file_path)
+        generateCudaCode(args.file, args.boolean_equations, args.cpu)
