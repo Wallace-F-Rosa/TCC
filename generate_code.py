@@ -2,15 +2,45 @@ import os
 import argparse
 import sys
 
-def write_equations(code_file, state_size, network_size, weights_size, weights_file_content):
-    """Escreve no arquivo de saída tlf.cu os comandos para executar as equações diretamente no código.
+def write_random_initator(code_file, state_size, cpu=False):
+    """Escreve no arquivo de saída a função de inicialização dos estados.
+
+    Args:
+        code_file (file): objeto representando arquivo de saída aberto para escrita.
+        state_size (int): tamanho do estado da rede em representação de números de 64 bits.
+        cpu (bool): código gerado deve ser C++ puro sem funcionalidades CUDA.
+    """
+    if not cpu:
+        # gerador de long long sobol64 gpu. chamada no host
+        code_file.write('void init_rand_d(unsigned long long * state_d, unsigned long long SIMULATIONS) {\n'+
+                        '   curandGenerator_t gen;\n'+
+                        '   curandCreateGenerator(&gen, CURAND_RNG_QUASI_SOBOL64);\n'+
+                        '   curandGenerateLongLong(gen, state_d, '+ str(state_size) +'*SIMULATIONS);\n'+
+                        '   curandDestroyGenerator(gen);\n'+
+                        '}\n')
+
+    if cpu:
+        # números aleatórios cpu
+        code_file.write('void init_rand_h(unsigned long long * state, unsigned long long SIMULATIONS) {\n'+
+                        '   std::random_device rd;\n'+
+                        '   std::mt19937_64 e2(rd());\n'+
+                        '   std::uniform_int_distribution<unsigned long long> dist(0, (unsigned long long)std::llround(std::pow(2,64)));\n'+
+                        '   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n'+
+                        '       for (size_t j = 0; j < '+ str(state_size) +'; j++)\n'+
+                        '           state[i*'+ str(state_size) +' + j] = dist(e2);\n'+
+                        '   }\n'+
+                        '}\n')
+
+def write_equations(code_file, state_size, network_nodes, eqs_size, eqs_file_content, cpu=False):
+    """Escreve no arquivo de saída os comandos para executar as equações diretamente no código.
         
     Args:
         code_file (file): objeto representando arquivo de saída aberto para escrita.
         state_size (int): tamanho do estado da rede em representação de números de 64 bits.
-        network_size (int): número de nós da rede.
-        weights_size (list): lista com a quantidade de pesos para equação da rede.
-        weights_file_content (file): objeto representando arquivo com pesos das equações aberto para leitura.
+        network_nodes (list): lista de nós da rede.
+        eqs_size (list): lista com o tamanho de cada equação da rede.
+        eqs_file_content (file): objeto representando arquivo com equações aberto para leitura.
+        cpu (bool): código gerado deve ser C++ puro sem funcionalidades CUDA.
     """
 
     code_file.write('   unsigned long long aux['+str(state_size)+'];\n')
@@ -19,25 +49,30 @@ def write_equations(code_file, state_size, network_size, weights_size, weights_f
         code_file.write('   aux['+str(i)+'] = 0;\n')
 
     # aplicar equações
-    for i in range(network_size) :
-        eq = '    aux['+str(i//64)+'] |= (unsigned long long) ( ( '
-        line = weights_file_content[2+i].split('\n')[0].split(' ')
-        for y in range(weights_size[i]):
-            eq += '( ( s['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
-            if y != weights_size[i] - 1:
-                eq+=' + '
-        eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
-        code_file.write(eq)
+    if not cpu:
+        for i in range(len(network_nodes)) :
+            eq = '    aux['+str(i//64)+'] |= (unsigned long long) ( ( '
+            line = eqs_file_content[2+i].split('\n')[0].split(' ')
+            for y in range(eqs_size[i]):
+                eq += '( ( s['+str(int(line[2*y])//64)+'] >> '+str(int(line[2*y])%64)+') % 2 ) * '+str(line[2*y+1])
+                if y != eqs_size[i] - 1:
+                    eq+=' + '
+            eq += ' ) >= '+str(line[len(line)-1])+' ) << '+str(i%64)+';\n'
+            code_file.write(eq)
+    else:
+        #TODO: equações boolenas
+        pass
 
     # estado0 e estado1 rebem resultado de aux, andamos 1 passo com as equações da rede
     for i in range(state_size):
         code_file.write('   s['+str(i)+'] = aux['+str(i)+'];\n')
 
-def write_headers(code_file):
+def write_headers(code_file, cpu=False):
     """Escreve no arquivo de saída tlf.cu os headers c++ e CUDA necessários para rodar o programa.
 
     Args:
         code_file (file): objeto representando arquivo de saída aberto para escrita.
+        cpu (bool): código gerado deve ser C++ puro sem funcionalidades CUDA.
     """
 
     code_file.write('#include <iostream>\n'+
@@ -53,16 +88,18 @@ def write_headers(code_file):
                     '#include <stdio.h>\n'+
                     '#include <stdlib.h>\n'+
                     '#include <algorithm>\n'+
-                    '#include <curand.h>\n'+
+
                     '#include <random>\n'+
                     '#include <cmath>\n'+
                     '#include <omp.h>\n'+
                     '\nusing namespace std;\n'+
-                    'using namespace std::chrono;\n\n'+
-                    '#define cudaCheckError() { cudaError_t e=cudaGetLastError(); if(e!=cudaSuccess) { printf("Cuda failure %s:%d: %s",__FILE__,__LINE__,cudaGetErrorString(e)); exit(0); } }\n')
+                    'using namespace std::chrono;\n\n')
+    if not cpu:
+        code_file.write('#include <curand.h>\n'+
+                        '#define cudaCheckError() { cudaError_t e=cudaGetLastError(); if(e!=cudaSuccess) { printf("Cuda failure %s:%d: %s",__FILE__,__LINE__,cudaGetErrorString(e)); exit(0); } }\n')
 
 
-def generateCudaCode(weights_file_path, explicit_equations=False, cpu=False):
+def generateCudaCode(eqs_file_path, explicit_equations=False, cpu=False):
     """Gera código cuda para simulação da rede utilizando equações com peso em arquivo de saída tlf.cu.
         
     Args:
@@ -70,16 +107,22 @@ def generateCudaCode(weights_file_path, explicit_equations=False, cpu=False):
     """
 
     # lendo pesos das redes
-    weightsFile = open(weights_file_path, 'r')
+    weightsFile = open(eqs_file_path, 'r')
     fileContent = weightsFile.readlines()
 
     weightsFile.close()
 
     # definindo valores
-    networkNodes = fileContent[0].split('\n')[0].split(' ')
+    networkNodes = []
+    if not cpu:
+        networkNodes = fileContent[0].split('\n')[0].split(' ')
+    else:
+        for l in fileContent:
+            networkNodes.append(l.split(' = ')[0])
+        print(networkNodes)
     networkSize = len(networkNodes)
     weightsSize = [ int(x) for x in fileContent[1].split('\n')[0].split(' ')]
-    print(weightsSize)
+    # print(weightsSize)
     # gerando código da rede
     output_file_name = 'tlf.cu'
     if cpu:
@@ -291,28 +334,10 @@ def generateCudaCode(weights_file_path, explicit_equations=False, cpu=False):
                     '}\n')
 
     # inicializa estados inicias aleatoriamente na gpu
-    # gerador de long long sobol64. chamada no host
-    code_file.write('void init_rand_d(unsigned long long * state_d, unsigned long long SIMULATIONS) {\n'+
-                    '   curandGenerator_t gen;\n'+
-                    '   curandCreateGenerator(&gen, CURAND_RNG_QUASI_SOBOL64);\n'+
-                    '   curandGenerateLongLong(gen, state_d, '+ str(stateSize) +'*SIMULATIONS);\n'+
-                    '   curandDestroyGenerator(gen);\n'+
-                    '}\n')
-
-    # números aleatórios cpu
-    code_file.write('void init_rand_h(unsigned long long * state, unsigned long long SIMULATIONS) {\n'+
-                    '   std::random_device rd;\n'+
-                    '   std::mt19937_64 e2(rd());\n'+
-                    '   std::uniform_int_distribution<unsigned long long> dist(0, (unsigned long long)std::llround(std::pow(2,64)));\n'+
-                    '   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n'+
-                    '       for (size_t j = 0; j < '+ str(stateSize) +'; j++)\n'+
-                    '           state[i*'+ str(stateSize) +' + j] = dist(e2);\n'+
-                    '   }\n'+
-                    '}\n')
+    write_random_initator(code_file, stateSize)
 
     # código main, aloca vetores e preencher estados iniciais com números randômicos
     # chama kernel gpu e função cpu para calcular os atratores
-    # TODO: medir tempo de execução em cpu e gpu e gerar gráficos de comparacao
     # TODO: comparar saída dos atratores para ver qual a diferença entre booleano e tlf
     code_file.write('int main(int argc, char **argv) {\n'+
                     '   unsigned long long SIMULATIONS = 0;\n'+    
@@ -379,23 +404,23 @@ if __name__ == '__main__' :
     um arquivo tlf.cu para simulação da rede em CUDA.
 
     Args:
-        file (string) : caminho até arquivo com pesos da rede.
-        --explicit-equations : faz com que as equações sejam diretamente inseridas no código sem a utilização de memória. 
+        file (string): caminho até arquivo com equações da rede(boolenas ou de soma de pesos).
+        explicit-equations (bool): faz com que as equações sejam diretamente inseridas no código sem a utilização de memória. 
+        cpu (bool): código gerado roda somente na CPU, sem funcionalidades CUDA.
     """
 
     parser = argparse.ArgumentParser(description='Recebe equações TLF '+
-            '(soma de pesos) de uma Rede Reguladora e retorna '+
+            '(soma de pesos) ou boolenas de uma Rede Reguladora e retorna '+
             'como saída um arquivo tlf.cu com código CUDA para '+
             'simulação da rede.'
     )
-    parser.add_argument('file', type=str, help='Arquivo contendo equações de pesos')
-    parser.add_argument('--explicit-equations', '-e', action='store_true', help='Equações são inseridas diretamente no código sem usar memória')
-    parser.add_argument('--cpu', type=str, default='gpu', help='Gera código cpu com openmp')
+    parser.add_argument('--file', '-f', type=str, help='Arquivo contendo equações de pesos ou boolenas')
+    parser.add_argument('--boolean-equations', '-b', action='store_true', help='Equações são inseridas diretamente no código sem usar memória')
+    parser.add_argument('--cpu', type=str, default='gpu', help='Gera código C++ (.cpp) com openmp')
     args = parser.parse_args()
     # try :
-    weights_file_path = args.file
-    print(weights_file_path)
-    if not os.path.exists(weights_file_path) :
+    eqs_file_path = args.file
+    if not os.path.exists(eqs_file_path) :
         print('Arquivo com pesos da rede não foi encontrado!')
     else:
-        generateCudaCode(weights_file_path)
+        generateCudaCode(eqs_file_path)
