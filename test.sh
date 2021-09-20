@@ -4,7 +4,7 @@
 mkdir -p "testes/${1}"
 cd "testes/${1}"
 python ../../redes_reg_genes/redes_pesos/load_graph.py "../../redes_reg_genes/redes_bio/40-100/${1}/expr/expressions.ALL.txt" 1
-if [ $# >= 3 ]
+if [[ $# -ge 3 ]]
 then
     python ../../TCC/generate_code.py "../../redes_reg_genes/redes_bio/40-100/${1}/expr/expressions.ALL.txt" $3
 else
