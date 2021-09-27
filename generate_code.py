@@ -132,7 +132,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
         networkNodes = fileContent[0].split('\n')[0].split(' ')
     else:
         for l in fileContent:
-            networkNodes.append(l.split(' = ')[0])
+            networkNodes.append(l.split(' = ')[0].strip())
     networkSize = len(networkNodes)
     weightsSize = []
     if not boolean_equations:
