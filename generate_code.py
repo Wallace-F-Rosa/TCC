@@ -358,7 +358,6 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
 
     # código main, aloca vetores e preencher estados iniciais com números randômicos
     # chama kernel gpu e função cpu para calcular os atratores
-    # TODO: comparar saída dos atratores para ver qual a diferença entre booleano e tlf
     code_file.write('int main(int argc, char **argv) {\n'+
                     '   unsigned long long SIMULATIONS = 0;\n'+    
                     '   std::string argv2 = argv[1];\n'+
@@ -366,46 +365,49 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
                     "       SIMULATIONS += ((unsigned long long)(argv2[i] - '0'))*pow(10,argv2.size()-i-1);\n"+
                     '   cout << "Alocating memory...";\n'+
                     '   unsigned long long * statef_h, * statef_d;\n'+
-                    '   statef_h = new unsigned long long[SIMULATIONS*'+ str(stateSize) +'];\n'+
-                    '   cudaMalloc((unsigned long long **)&statef_d,sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +');\n'+
-                    '   cout << "[OK]" << '+repr("\n")+';\n'+
-                    '   cudaDeviceProp prop;\n'+
-                    '   int device = 0;\n'+
-                    '   int threads = 512;\n'+
-                    '   #ifdef DEVICE\n'+
-                    '       device = DEVICE;\n'+
-                    '   #else\n'+
-                    '       cudaSetDevice(device);\n'+
-                    '       cudaGetDeviceProperties(&prop, device);\n'+
-                    '       #ifdef THREADS\n'+
-                    '           threads = THREADS;\n'+
-                    '       #else\n'+
-                    '           threads = prop.maxThreadsPerBlock;\n'+
-                    '       #endif\n'+
-                    '   #endif\n'+
-                    '   cout << "GPU : " << prop.name << '+repr("\n")+';\n'+
-                    '   dim3 block(threads);\n'+
-                    '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
-                    '   cout << "Number of threads used: " << threads << "  Max allowed :" << prop.maxThreadsDim[0] << '+repr("\n")+';\n'+
-                    '   cout << "Number of blocks used: " << grid.x << "  Max allowed :" << prop.maxGridSize[0] << '+repr("\n")+';\n'+
-                    '   cout << "Initiating values...";\n'+
-                    '   init_rand_d(statef_d, SIMULATIONS);\n'+
-                    '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
-                    '   cout << "[OK]" << '+repr("\n")+';\n'+
-                    '   cout << "Running Simulation...";\n'+
-                    '   auto start_gpu = high_resolution_clock::now();\n'+
-                    '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
-                    '   cudaCheckError();\n'+
-                    '   cudaDeviceSynchronize();\n'+
-                    '   auto end_gpu = high_resolution_clock::now();\n'+
-                    '   auto start_cpu = high_resolution_clock::now();\n'+
-                    '   network_simulation_h(statef_h, SIMULATIONS);\n'
+                    '   statef_h = new unsigned long long[SIMULATIONS*'+ str(stateSize) +'];\n')
+    if not cpu:
+        code_file.write('   cudaMalloc((unsigned long long **)&statef_d,sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +');\n'+
+                        '   cout << "[OK]" << '+repr("\n")+';\n'+
+                        '   cudaDeviceProp prop;\n'+
+                        '   int device = 0;\n'+
+                        '   int threads = 512;\n'+
+                        '   #ifdef DEVICE\n'+
+                        '       device = DEVICE;\n'+
+                        '   #else\n'+
+                        '       cudaSetDevice(device);\n'+
+                        '       cudaGetDeviceProperties(&prop, device);\n'+
+                        '       #ifdef THREADS\n'+
+                        '           threads = THREADS;\n'+
+                        '       #else\n'+
+                        '           threads = prop.maxThreadsPerBlock;\n'+
+                        '       #endif\n'+
+                        '   #endif\n'+
+                        '   cout << "GPU : " << prop.name << '+repr("\n")+';\n'+
+                        '   dim3 block(threads);\n'+
+                        '   dim3 grid((SIMULATIONS + block.x -1)/block.x);\n'+
+                        '   cout << "Number of threads used: " << threads << "  Max allowed :" << prop.maxThreadsDim[0] << '+repr("\n")+';\n'+
+                        '   cout << "Number of blocks used: " << grid.x << "  Max allowed :" << prop.maxGridSize[0] << '+repr("\n")+';\n'+
+                        '   cout << "Initiating values...";\n'+
+                        '   init_rand_d(statef_d, SIMULATIONS);\n'+
+                        '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
+                        '   cout << "[OK]" << '+repr("\n")+';\n'+
+                        '   cout << "Running Simulation...";\n'+
+                        '   auto start_gpu = high_resolution_clock::now();\n'+
+                        '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
+                        '   cudaCheckError();\n'+
+                        '   cudaDeviceSynchronize();\n'+
+                        '   auto end_gpu = high_resolution_clock::now();\n')
+    code_file.write('   auto start_cpu = high_resolution_clock::now();\n'+
+                    '   network_simulation_h(statef_h, SIMULATIONS);\n'+
                     '   auto end_cpu = high_resolution_clock::now();\n'+
-                    '   cout << "[OK]" << '+repr("\n")+';\n'+
-                    '   auto dt = duration<double, milli> (end_gpu - start_gpu);\n'+
-                    '   cout << "Running Time GPU (ms) : " << dt.count() << '+repr('\n')+';\n'+
-                    '   dt = duration<double, milli> (end_cpu - start_cpu);\n'+
-                    '   cout << "Running Time CPU (ms) : " << dt.count() << '+repr('\n')+';\n'+
+                    '   cout << "[OK]" << '+repr("\n")+';\n')
+    if not cpu:
+        code_file.write('   auto dt = duration<double, milli> (end_gpu - start_gpu);\n'+
+                        '   cout << "Running Time GPU (ms) : " << dt.count() << '+repr('\n')+';\n')
+
+    code_file.write('   auto dt_cpu = duration<double, milli> (end_cpu - start_cpu);\n'+
+                    '   cout << "Running Time CPU (ms) : " << dt_cpu.count() << '+repr('\n')+';\n'+
                     '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
                     '   cout << "Getting atractors found...";\n'+
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
