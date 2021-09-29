@@ -113,6 +113,72 @@ def write_headers(code_file, cpu=False):
                         '#define cudaCheckError() { cudaError_t e=cudaGetLastError(); if(e!=cudaSuccess) { printf("Cuda failure %s:%d: %s",__FILE__,__LINE__,cudaGetErrorString(e)); exit(0); } }\n')
 
 
+def write_comp_func(code_file, state_size, cpu=False):
+    """Escreve no arquivo de saída o código de função de comparação de estados:
+
+    Args:
+        code_file (file): objeto representando arquivo de saída aberto para escrita.
+        state_size (integer): quantidade de inteiros (64bit) necessários para representar o estado.
+        cpu (bool): código gerado deve ser C++ puro sem funcionalidades CUDA.
+    """
+    if not cpu:
+        # função de comparação entre estados kernel
+        code_file.write('__device__ bool equals_d(unsigned long long * a, unsigned long long * b) {\n'+
+                        '   for (int i = 0; i < '+str(state_size)+'; i++) {\n'+
+                        '       if (a[i] != b[i])\n'+
+                        '           return false;\n'+
+                        '   }\n'+
+                        '   return true;\n'+
+                        '}\n')
+
+    # função de comparação entre estados host
+    code_file.write('bool equals_h(unsigned long long * a, unsigned long long * b) {\n'+
+                    '   for (int i = 0; i < '+str(state_size)+'; i++) {\n'+
+                    '       if (a[i] != b[i])\n'+
+                    '           return false;\n'+
+                    '   }\n'+
+                    '   return true;\n'+
+                    '}\n')
+
+def write_cuda_kernel(code_file, state_size):
+    """Escreve no arquivo de saída o código do kernel CUDA para simulação da rede.
+
+    Args:
+        code_file (file): objeto representando arquivo de saída aberto para escrita.
+        state_size (int): quantidade de inteiros(64bit) necessários para representar o estado.
+    """
+
+    code_file.write('__global__ void network_simulation_d(unsigned long long * statef, unsigned long long SIMULATIONS) {\n'+
+                    '   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n'+
+                    '   unsigned long long state0['+ str(state_size) +'], state1['+ str(state_size) +'];\n'+
+                    '   if (tid < SIMULATIONS) {\n')
+    
+    # inicializando estados
+    for i in range(state_size):
+        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'] = statef[tid*'+ str(state_size) +' + '+ str(i) +'];\n')
+
+
+
+    # GPU
+    # equações : 
+    # estadof[var//64] = 0
+    # estadof[var//64] |= ( ( ( (estado0[i//64] >> var) % 2 )*peso + ( (estado0[i//64] >> var) % 2 )*peso  ...) >= lim) << var;
+    code_file.write('       do {\n')
+
+    code_file.write('           next_d(state0);\n')
+
+    # andamos 2 passos com estado 1
+    code_file.write('           next_d(state1);\n')
+    code_file.write('           next_d(state1);\n')
+
+    code_file.write('       } while(!equals_d(state0, state1));\n')
+
+    # salva o estado inicial do atrator na memória global da gpu
+    for i in range(state_size) :
+        code_file.write('       statef[tid*'+ str(state_size) +' + '+ str(i) +'] = state1['+str(i)+'];\n')
+    code_file.write('   }\n'+
+                    '}\n')
+
 def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     """Gera código cuda para simulação da rede utilizando equações com peso em arquivo de saída tlf.cu.
         
@@ -152,22 +218,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     code_file.write('typedef unsigned long long * state;\n')
 
     # função de comparação entre estados kernel
-    code_file.write('__device__ bool equals_d(unsigned long long * a, unsigned long long * b) {\n'+
-                    '   for (int i = 0; i < '+str(stateSize)+'; i++) {\n'+
-                    '       if (a[i] != b[i])\n'+
-                    '           return false;\n'+
-                    '   }\n'+
-                    '   return true;\n'+
-                    '}\n')
-
-    # função de comparação entre estados host
-    code_file.write('bool equals_h(unsigned long long * a, unsigned long long * b) {\n'+
-                    '   for (int i = 0; i < '+str(stateSize)+'; i++) {\n'+
-                    '       if (a[i] != b[i])\n'+
-                    '           return false;\n'+
-                    '   }\n'+
-                    '   return true;\n'+
-                    '}\n')
+    write_comp_func(code_file, stateSize, cpu)
 
     # função host que aplica equações num estado
     code_file.write('void next_h(unsigned long long * s) {\n')
@@ -185,36 +236,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     code_file.write('}\n')
 
     # cuda kernel recebe os estados aleatórios inicialmente, simulando N estados até o número de simulações fornecido
-    code_file.write('__global__ void network_simulation_d(unsigned long long * statef, unsigned long long SIMULATIONS) {\n'+
-                    '   unsigned long long tid = threadIdx.x + blockIdx.x*blockDim.x;\n'+
-                    '   unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'];\n'+
-                    '   if (tid < SIMULATIONS) {\n')
-    
-    # inicializando estados
-    for i in range(stateSize):
-        code_file.write('       state0['+str(i)+'] = state1['+str(i)+'] = statef[tid*'+ str(stateSize) +' + '+ str(i) +'];\n')
 
-
-
-    # GPU
-    # equações : 
-    # estadof[var//64] = 0
-    # estadof[var//64] |= ( ( ( (estado0[i//64] >> var) % 2 )*peso + ( (estado0[i//64] >> var) % 2 )*peso  ...) >= lim) << var;
-    code_file.write('       do {\n')
-
-    code_file.write('           next_d(state0);\n')
-
-    # andamos 2 passos com estado 1
-    code_file.write('           next_d(state1);\n')
-    code_file.write('           next_d(state1);\n')
-
-    code_file.write('       } while(!equals_d(state0, state1));\n')
-
-    # salva o estado inicial do atrator na memória global da gpu
-    for i in range(stateSize) :
-        code_file.write('       statef[tid*'+ str(stateSize) +' + '+ str(i) +'] = state1['+str(i)+'];\n')
-    code_file.write('   }\n'+
-                    '}\n')
 
     code_file.write('\n')
 
@@ -389,10 +411,11 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   output_atractors(atratores);\n'
-                    '   delete [] statef_h;\n'+
-                    '   cudaFree(statef_d);\n'+
-                    '   cudaDeviceReset();\n'+
-                    '   return 0;\n'+
+                    '   delete [] statef_h;\n')
+    if not cpu:
+        code_file.write('   cudaFree(statef_d);\n'+
+                        '   cudaDeviceReset();\n')
+    code_file.write('   return 0;\n'+
                     '}\n')
 
     code_file.close()
