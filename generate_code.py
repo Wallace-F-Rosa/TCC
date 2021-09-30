@@ -210,7 +210,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     code_file = open(output_file_name, 'w+')
     
     # headers do código
-    write_headers(code_file)
+    write_headers(code_file, cpu)
 
     # estado é um vetor de inteiros
     # cada bit representa um vértice
@@ -228,12 +228,14 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     code_file.write('}\n')
 
     # função device que aplica equações da rede em um estado 
-    code_file.write('__device__ void next_d(unsigned long long * s) {\n')
+    if not cpu:
+        code_file.write('__device__ void next_d(unsigned long long * s) {\n')
 
-    # escreve equações
-    write_equations(code_file, stateSize, networkNodes, weightsSize, fileContent, boolean_equations)
+        # escreve equações
+        write_equations(code_file, stateSize, networkNodes, weightsSize, fileContent, boolean_equations)
 
-    code_file.write('}\n')
+        code_file.write('}\n')
+        write_cuda_kernel(code_file, stateSize)
 
     # cuda kernel recebe os estados aleatórios inicialmente, simulando N estados até o número de simulações fornecido
 
@@ -397,18 +399,20 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
                         '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
                         '   cudaCheckError();\n'+
                         '   cudaDeviceSynchronize();\n'+
+                        '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
                         '   auto end_gpu = high_resolution_clock::now();\n')
-    code_file.write('   auto start_cpu = high_resolution_clock::now();\n'+
-                    '   network_simulation_h(statef_h, SIMULATIONS);\n'+
-                    '   auto end_cpu = high_resolution_clock::now();\n'+
-                    '   cout << "[OK]" << '+repr("\n")+';\n')
+    else:
+        code_file.write('   auto start_cpu = high_resolution_clock::now();\n'+
+                        '   network_simulation_h(statef_h, SIMULATIONS);\n'+
+                        '   auto end_cpu = high_resolution_clock::now();\n'+
+                        '   cout << "[OK]" << '+repr("\n")+';\n')
     if not cpu:
         code_file.write('   auto dt = duration<double, milli> (end_gpu - start_gpu);\n'+
                         '   cout << "Running Time GPU (ms) : " << dt.count() << '+repr('\n')+';\n')
 
     code_file.write('   auto dt_cpu = duration<double, milli> (end_cpu - start_cpu);\n'+
                     '   cout << "Running Time CPU (ms) : " << dt_cpu.count() << '+repr('\n')+';\n'+
-                    '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
+
                     '   cout << "Getting atractors found...";\n'+
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
