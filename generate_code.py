@@ -409,11 +409,11 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     if not cpu:
         code_file.write('   auto dt = duration<double, milli> (end_gpu - start_gpu);\n'+
                         '   cout << "Running Time GPU (ms) : " << dt.count() << '+repr('\n')+';\n')
+    else:
+        code_file.write('   auto dt_cpu = duration<double, milli> (end_cpu - start_cpu);\n'+
+                        '   cout << "Running Time CPU (ms) : " << dt_cpu.count() << '+repr('\n')+';\n')
 
-    code_file.write('   auto dt_cpu = duration<double, milli> (end_cpu - start_cpu);\n'+
-                    '   cout << "Running Time CPU (ms) : " << dt_cpu.count() << '+repr('\n')+';\n'+
-
-                    '   cout << "Getting atractors found...";\n'+
+    code_file.write('   cout << "Getting atractors found...";\n'+
                     '   vector<string> atratores = complete_atractors(statef_h, SIMULATIONS);\n'
                     '   cout << "[OK]" << '+repr("\n")+';\n'+
                     '   output_atractors(atratores);\n'
