@@ -283,11 +283,12 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     # função que converte um atrator(vetor de estados) para string
     code_file.write("string to_string(vector<string> atractor){\n"+
                     # gambiarra para imprimir aspas duplas
-                    '   if(atractor.size() == 0) return "'+'";\n'+
-                    "   string result = atractor[0];\n"+
+                    '   if(atractor.size() == 0) return \"[\'\']\";\n'+
+                    "   string result = \"[\" + atractor[0];\n"+
                     "   for (int i = 1; i < atractor.size(); i++)\n"+
                     # gambiarra para imprimir aspas duplas
-                    '       result += "' + ' " + atractor[i];\n'+
+                    '       result += "' + '," + atractor[i];\n'+
+                    '   result += \"]\";\n'+
                     "   return result;\n"+
                     "}\n")
 
