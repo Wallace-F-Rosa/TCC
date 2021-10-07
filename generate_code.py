@@ -275,7 +275,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
                     "   stringstream stream;\n"+
                     "   stream << s[0];\n"
                     "   for(int i = 1; i < "+ str(stateSize-1) +"; i++)\n"+
-                    "       stream << '|' << s[i];\n"+
+                    "       stream << s[i];\n"+
                     "   stream >> result;\n"+
                     "   return result;\n"+
                     "}\n")
