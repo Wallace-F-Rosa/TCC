@@ -19,17 +19,16 @@ def write_random_initator(code_file, state_size, cpu=False):
                         '   curandDestroyGenerator(gen);\n'+
                         '}\n')
 
-    if cpu:
-        # números aleatórios cpu
-        code_file.write('void init_rand_h(unsigned long long * state, unsigned long long SIMULATIONS) {\n'+
-                        '   std::random_device rd;\n'+
-                        '   std::mt19937_64 e2(rd());\n'+
-                        '   std::uniform_int_distribution<unsigned long long> dist(0, (unsigned long long)std::llround(std::pow(2,64)));\n'+
-                        '   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n'+
-                        '       for (size_t j = 0; j < '+ str(state_size) +'; j++)\n'+
-                        '           state[i*'+ str(state_size) +' + j] = dist(e2);\n'+
-                        '   }\n'+
-                        '}\n')
+    # números aleatórios cpu
+    code_file.write('void init_rand_h(unsigned long long * state, unsigned long long SIMULATIONS) {\n'+
+                    '   std::random_device rd;\n'+
+                    '   std::mt19937_64 e2(rd());\n'+
+                    '   std::uniform_int_distribution<unsigned long long> dist(0, (unsigned long long)std::llround(std::pow(2,64)));\n'+
+                    '   for (unsigned long long i = 0; i < SIMULATIONS; i++) {\n'+
+                    '       for (size_t j = 0; j < '+ str(state_size) +'; j++)\n'+
+                    '           state[i*'+ str(state_size) +' + j] = dist(e2);\n'+
+                    '   }\n'+
+                    '}\n')
 
 def write_equations(code_file, state_size, network_nodes, eqs_size, eqs_file_content, boolean_equations=False):
     """Escreve no arquivo de saída os comandos para executar as equações diretamente no código.
@@ -179,12 +178,15 @@ def write_cuda_kernel(code_file, state_size):
     code_file.write('   }\n'+
                     '}\n')
 
-def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
+def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False, test_both=False):
     """Gera código cuda para simulação da rede utilizando equações com peso em arquivo de saída tlf.cu.
         
     Args:
         weights_file_path (string) : caminho até o arquivo com pesos da rede.
     """
+
+    if test_both:
+        cpu = False
 
     # lendo pesos das redes
     weightsFile = open(eqs_file_path, 'r')
@@ -210,6 +212,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     code_file = open(output_file_name, 'w+')
     
     # headers do código
+
     write_headers(code_file, cpu)
 
     # estado é um vetor de inteiros
@@ -402,7 +405,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
                         '   cudaDeviceSynchronize();\n'+
                         '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
                         '   auto end_gpu = high_resolution_clock::now();\n')
-    else:
+    if test_both or cpu:
         code_file.write('   auto start_cpu = high_resolution_clock::now();\n'+
                         '   network_simulation_h(statef_h, SIMULATIONS);\n'+
                         '   auto end_cpu = high_resolution_clock::now();\n'+
@@ -410,7 +413,8 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False):
     if not cpu:
         code_file.write('   auto dt = duration<double, milli> (end_gpu - start_gpu);\n'+
                         '   cout << "Running Time GPU (ms) : " << dt.count() << '+repr('\n')+';\n')
-    else:
+
+    if test_both or cpu:
         code_file.write('   auto dt_cpu = duration<double, milli> (end_cpu - start_cpu);\n'+
                         '   cout << "Running Time CPU (ms) : " << dt_cpu.count() << '+repr('\n')+';\n')
 
@@ -445,10 +449,11 @@ if __name__ == '__main__' :
     parser.add_argument('file', type=str, help='Arquivo contendo equações de pesos ou boolenas')
     parser.add_argument('--boolean-equations', '-b', action='store_true', help='Equações são inseridas diretamente no código sem usar memória')
     parser.add_argument('--cpu', action='store_true', default=False, help='Gera código C++ (.cpp) com openmp')
+    parser.add_argument('--test-both', action='store_true', default=False, help='Roda simulações gpu e cpu para comparação de tempo de simulação.' )
     args = parser.parse_args()
     # try :
     eqs_file_path = args.file
     if not os.path.exists(eqs_file_path) :
         print('Arquivo com pesos da rede não foi encontrado!')
     else:
-        generateCudaCode(args.file, args.boolean_equations, args.cpu)
+        generateCudaCode(args.file, args.boolean_equations, args.cpu, args.test_both)
