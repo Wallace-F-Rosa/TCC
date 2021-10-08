@@ -398,7 +398,6 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False, test_bot
                         '   init_rand_d(statef_d, SIMULATIONS);\n'+
                         '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
                         '   cout << "[OK]" << '+repr("\n")+';\n'+
-                        '   cout << "Running Simulation...";\n'+
                         '   auto start_gpu = high_resolution_clock::now();\n'+
                         '   network_simulation_d<<<grid,block>>>(statef_d, SIMULATIONS);\n'+
                         '   cudaCheckError();\n'+
@@ -408,8 +407,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False, test_bot
     if test_both or cpu:
         code_file.write('   auto start_cpu = high_resolution_clock::now();\n'+
                         '   network_simulation_h(statef_h, SIMULATIONS);\n'+
-                        '   auto end_cpu = high_resolution_clock::now();\n'+
-                        '   cout << "[OK]" << '+repr("\n")+';\n')
+                        '   auto end_cpu = high_resolution_clock::now();\n')
     if not cpu:
         code_file.write('   auto dt = duration<double, milli> (end_gpu - start_gpu);\n'+
                         '   cout << "Running Time GPU (ms) : " << dt.count() << '+repr('\n')+';\n')
