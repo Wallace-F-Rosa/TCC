@@ -276,8 +276,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False, test_bot
     code_file.write("string to_string(unsigned long long * s){\n"+
                     "   string result;\n"+
                     "   stringstream stream;\n"+
-                    "   stream << s[0];\n"
-                    "   for(int i = 1; i < "+ str(stateSize-1) +"; i++)\n"+
+                    "   for(int i = "+ str(stateSize-1) +"; i >= 0; i--)\n"+
                     "       stream << s[i];\n"+
                     "   stream >> result;\n"+
                     "   return result;\n"+
