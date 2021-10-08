@@ -1,6 +1,7 @@
 import networkx as nx
 # import matplotlib.pyplot as plt
 from pyvis.network import Network
+from dimcli.utils.networkviz import NetworkViz
 from math import log10
 import argparse
 import json
@@ -23,7 +24,7 @@ def viz(atractors):
         print(label)
         nx.add_cycle(G, atractor_data['atractors'][i], title=label)
         
-    nt = Network()
+    nt = NetworkViz(notebook=True)
     nt.from_nx(G)
     nt.show('nx.html')
 
