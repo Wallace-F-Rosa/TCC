@@ -11,8 +11,15 @@ def getAtractorLabel(atractor, nodes):
         for s in atractor:
             if (s>>i)%2 == 1:
                 label.append(nodes[i])
+    
+    text = ''
+    for i in range(len(label)-1):
+      if i > 0 and i%4 == 0:
+        text += '<br>'
+      text += label[i] + ', '
+    text += label[len(label)-1]
 
-    return ', '.join(label)
+    return text
 
 def viz(atractors):
     atractorsf = open(atractors, 'r')
@@ -20,15 +27,12 @@ def viz(atractors):
     G = nx.Graph()
     for i in range(len(atractor_data['atractors'])):
         label = getAtractorLabel(atractor_data['atractors'][i], atractor_data['nodes'])
-        print(label)
         nx.add_cycle(G, atractor_data['atractors'][i], title=label)
         
     nt = Network()
     nt.from_nx(G)
     nt.show('nx.html')
     display(HTML('nx.html'))
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Visualização de atratores com NetworkX.')
     # parser.add_argument('equation', type=str, help='Arquivo com equações booleans da rede.')
