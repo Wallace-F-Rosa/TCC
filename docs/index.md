@@ -1,37 +1,26 @@
-## Welcome to GitHub Pages
+## Introdução
 
-You can use the [editor on GitHub](https://github.com/Wallace-F-Rosa/TCC/edit/main/docs/index.md) to maintain and preview the content for your website in Markdown files.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### Redes Reguladoras
 
-### Markdown
+As redes utilizadas como teste, suas equações e referências podem ser encontradas no repositório [redes_reg_genes](https://github.com/Wallace-F-Rosa/redes_reg_genes)(submódulo deste repositório).
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+## Dependências
+Para geração de código CUDA e visualização de atratores é utilizada a linguagem Python com os seguintes módulos:
 
-```markdown
-Syntax highlighted code block
+* pandas
+* numpy
+* py2cytoscape
+* pyvis
+* networkx
+* dimcli
 
-# Header 1
-## Header 2
-### Header 3
+Para compilação e execução das simulação é necessário ter um ambiente com alguma GPU NVIDIA disponível e o [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) instalado.
 
-- Bulleted
-- List
+## Colab
 
-1. Numbered
-2. List
+É possível executar as simulações de rede e visualização de atratores via [Google Colab](https://colab.research.google.com/drive/19riKQhOeUC39oioSliIDZQNYto06Gp21?usp=sharing), sem necessidade de possuir uma GPU NVIDIA localmente.
 
-**Bold** and _Italic_ and `Code` text
+# Utilização / TroubleShooting
 
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Wallace-F-Rosa/TCC/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+Caso você tenha acesso a um ambiente com GPU NVIDIA (seja localmente ou em ambientes como a AWS) as instruções para gerar o código CUDA necessário e executar as simulações se encontram [aqui](utilizacao.md).
