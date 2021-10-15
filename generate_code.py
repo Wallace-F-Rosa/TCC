@@ -178,7 +178,7 @@ def write_cuda_kernel(code_file, state_size):
     code_file.write('   }\n'+
                     '}\n')
 
-def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False, test_both=False):
+def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False, single_core=False, test_both=False):
     """Gera código cuda para simulação da rede utilizando equações com peso em arquivo de saída tlf.cu.
         
     Args:
@@ -248,9 +248,11 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False, test_bot
     # CPU
     # versão cpu do calculo de atratores
     code_file.write('void network_simulation_h(unsigned long long * statef, unsigned long long SIMULATIONS){\n'+
-                    '   unsigned long long i;\n'+
-                    '   #pragma omp parallel for private (i)\n'+
-                    '   for(i = 0; i < SIMULATIONS; i++){\n'+
+                    '   unsigned long long i;\n')
+
+    if not single_core:
+        code_file.write('   #pragma omp parallel for private (i)\n')
+    code_file.write('   for(i = 0; i < SIMULATIONS; i++){\n'+
                     '       unsigned long long state0['+ str(stateSize) +'], state1['+ str(stateSize) +'], aux['+ str(stateSize) +'];\n')
 
     # inicializando estados
@@ -446,6 +448,7 @@ if __name__ == '__main__' :
     parser.add_argument('file', type=str, help='Arquivo contendo equações de pesos ou boolenas')
     parser.add_argument('--boolean-equations', '-b', action='store_true', help='Equações são inseridas diretamente no código sem usar memória')
     parser.add_argument('--cpu', action='store_true', default=False, help='Gera código C++ (.cpp) com openmp')
+    parser.add_argument('--single-core', action='store_true', default=False, help='Gera código C++ (.cpp) single core. Não possuí aceleração com Openmp.')
     parser.add_argument('--test-both', action='store_true', default=False, help='Roda simulações gpu e cpu para comparação de tempo de simulação.' )
     args = parser.parse_args()
     # try :
@@ -453,4 +456,4 @@ if __name__ == '__main__' :
     if not os.path.exists(eqs_file_path) :
         print('Arquivo com pesos da rede não foi encontrado!')
     else:
-        generateCudaCode(args.file, args.boolean_equations, args.cpu, args.test_both)
+        generateCudaCode(args.file, args.boolean_equations, args.cpu, args.single_core, args.test_both)
