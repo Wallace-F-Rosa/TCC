@@ -10,7 +10,7 @@ then
 else
     python ../../generate_code.py "expressions_pesos.txt" --test-both
 fi
-g++ -fopenmp -o tlf tlf.cpp
+nvcc -w -DTHREADS=$2 -arch=sm_37 -Xcompiler -fopenmp -Wno-deprecated-gpu-targets -lcurand -o tlf tlf.cu
 ./tlf 1000 > 1K.txt
 ./tlf 10000 > 10K.txt
 ./tlf 100000 > 100K.txt
