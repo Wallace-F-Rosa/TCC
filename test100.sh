@@ -6,11 +6,11 @@ cd "testes/${1}"
 python ../../redes_reg_genes/redes_pesos/load_graph.py "../../redes_reg_genes/redes_bio/100-200/${1}/expr/expressions.ALL.txt" 1
 if [[ $# -ge 3 ]]
 then
-    python ../../TCC/generate_code.py "../../redes_reg_genes/redes_bio/40-100/${1}/expr/expressions.ALL.txt" $3
+    python ../../generate_code.py "../../redes_reg_genes/redes_bio/100-200/${1}/expr/expressions.ALL.txt" -b --test-both
 else
-    python ../../TCC/generate_code.py "expressions_pesos.txt"
+    python ../../generate_code.py "expressions_pesos.txt" --test-both
 fi
-nvcc -w -DTHREADS=$2 -arch=sm_37 -Xcompiler -fopenmp -Wno-deprecated-gpu-targets -lcurand -o tlf tlf.cu
+g++ -fopenmp -o tlf tlf.cpp
 ./tlf 1000 > 1K.txt
 ./tlf 10000 > 10K.txt
 ./tlf 100000 > 100K.txt
