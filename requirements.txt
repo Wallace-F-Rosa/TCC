@@ -1,0 +1,6 @@
+pandas
+numpy
+py2cytoscape
+pyvis
+networkx
+dimcli
