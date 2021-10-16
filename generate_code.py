@@ -406,11 +406,12 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False, single_c
                         '   cudaMemcpy(statef_h, statef_d, sizeof(unsigned long long)*SIMULATIONS*'+ str(stateSize) +', cudaMemcpyDeviceToHost);\n'+
                         '   auto end_gpu = high_resolution_clock::now();\n')
     if test_both or cpu:
-        code_file.write('   cout << "[OK]" << '+repr("\n")+';\n'+
-                        '   cout << "Initiating values...";\n'+
-                        '   init_rand_h(statef_h, SIMULATIONS);\n'+
-                        '   cout << "[OK]" << '+repr("\n")+';\n'+
-                        '   auto start_cpu = high_resolution_clock::now();\n'+
+        if not test_both:
+            code_file.write('   cout << "[OK]" << '+repr("\n")+';\n'+
+                            '   cout << "Initiating values...";\n'+
+                            '   init_rand_h(statef_h, SIMULATIONS);\n'+
+                            '   cout << "[OK]" << '+repr("\n")+';\n')
+        code_file.write('   auto start_cpu = high_resolution_clock::now();\n'+
                         '   network_simulation_h(statef_h, SIMULATIONS);\n'+
                         '   auto end_cpu = high_resolution_clock::now();\n')
     if not cpu:
