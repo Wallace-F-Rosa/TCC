@@ -308,7 +308,7 @@ def generateCudaCode(eqs_file_path, boolean_equations=False, cpu=False, single_c
                     "   while(true) {\n"+
                     "       next_h(s0);\n")
     code_file.write("       if (!equals_h(s0,s1))\n"+
-                    "           atractor.push_back(to_string(s1));\n"+
+                    "           atractor.push_back(to_string(s0));\n"+
                     "       else\n"+
                     "           break;\n"+
                     "   }\n"+
